@@ -378,12 +378,15 @@
       <div class="sidebar-section" style="margin-top:8px">Feedback &amp; Tracking</div>
       <div id="sidebar-tools"></div>
     </div>
-    <div class="sidebar-footer">
-      <button class="btn btn-secondary btn-sm" onclick="doExport()" style="flex:1">Export</button>
-      <label class="btn btn-secondary btn-sm" style="flex:1;cursor:pointer;justify-content:center">
-        Import
-        <input type="file" accept=".json" style="display:none" onchange="doImport(event)">
-      </label>
+    <div class="sidebar-footer" style="flex-direction:column;gap:8px;align-items:stretch">
+      <div id="sync-status" style="font-size:11px;color:var(--text-3);text-align:center"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="doExport()" style="flex:1">Export</button>
+        <label class="btn btn-secondary btn-sm" style="flex:1;cursor:pointer;justify-content:center">
+          Import
+          <input type="file" accept=".json" style="display:none" onchange="doImport(event)">
+        </label>
+      </div>
     </div>
   </aside>
 
@@ -429,7 +432,7 @@ const DEFAULT_CLIENTS = {
   },
   irc: {
     id: 'irc', name: 'IRC Partners', color: '#7c3aed', initials: 'IRC',
-    description: 'A long-term, equity-aligned capital partnership — not a broker, not a deck shop. IRC architects institutional-ready capital strategy/structure, executes the raise, and stays on through every future round to exit or IPO. Samuel: "we\'re equity aligned"; "we want to stay on for every future round through exit or ipo."',
+    description: 'Equity-aligned capital partner for founders/developers raising $5M+ — designs the capital structure, runs the raise, and stays on across future rounds (not a one-off broker).',
     offer: 'CORE OFFER (this is the positioning — lead with this): an equity-aligned capital partnership for revenue-generating founders/operators raising $5M+. IRC designs the capital roadmap + deal structure, protects founder economics/control, runs a disciplined institutional process through close, and stays embedded across future rounds — never a one-off broker transaction. Deliverables: capital roadmap/round architecture plan, cap table & SAFE cleanup, waterfall analysis across exit scenarios, term sheet risk map + negotiation plan, governance/control map, institutional-grade investor narrative + materials, mandate-fit target investor map, full process control through close.\nTOP-OF-FUNNEL WEDGE (tactical, not the positioning): the Capital Raise Pre-Flight — a $2,997 one-time, 20–30 page diagnostic scoring a founder\'s deal across 12 institutional pass/fail gates, 10-business-day delivery, fee credited toward a full engagement. Funnel: Ad → VSL landing page → lead form (contact + 3 non-gating qualifying questions) → 30-min booking with Samuel → sales call → manual Stripe checkout → intake. This is the entry wedge into the $40K/$150K equity-aligned engagements — do not present it as what IRC "is."',
     avatars: 'PRIMARY AUDIENCE #1 — Institutional-Scale Real Estate Developers: developers (not small syndicators) pursuing institutional equity, structured capital, and sometimes layered debt for large/complex projects where the capital stack matters. Capable operators who are not yet equipped to jump from retail-style capital to true institutional capital without the right architecture/sequencing.\nPRIMARY AUDIENCE #2 — Privately held operating companies raising Series A+ ($5M and above): proven model, real revenue/traction, past the "friends and family" stage, need institutional growth capital and materials/structure/story that actually match the check size.\n\nAUDIENCE EXCLUSIONS — who IRC is intentionally NOT for (these are who to EXCLUDE from targeting, never who to target):\nA) "Little fish" — retail-style syndication / accredited-investor fundraising. Wrong positioning lane entirely ("kindergarten play" vs institutional capital, per Samuel).\nB) Bargain shoppers chasing a cheap deck, cheap outreach, and "quick wins."\nC) Founders who want a one-raise-then-goodbye broker relationship — conflicts with IRC\'s core differentiator of multi-round continuity.\nD) CEOs who cannot handle institutional conversations professionally — cannot flex/negotiate with investors, cannot perform under diligence pressure. Samuel: "We\'ve had CEOs that destroy our raises because they can\'t flex properly with the right investors and negotiate terms well." THIS IS AN EXCLUSION — these are explicitly who NOT to target, not a target segment or persona to write ads toward.\nE) Prospects who are not financially ready for a premium, high-accountability engagement (cash-flow constrained — Samuel: "Lack of cash flow is probably the biggest").',
     funnelStages: 'Impressions, Clicks, LPV, Lead form submits, Booked calls',
@@ -454,6 +457,7 @@ let APP = {
 // ─── Storage ─────────────────────────────────────────────────────────────────
 function saveState() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ clients: APP.clients })); } catch(e) {}
+  schedulePush();
 }
 function loadState() {
   try {
@@ -1749,6 +1753,7 @@ function getFeedback(clientId) {
 }
 function saveFeedback(clientId, data) {
   try { localStorage.setItem(feedbackKey(clientId), JSON.stringify(data)); } catch (e) {}
+  schedulePush();
 }
 function getMastersheet(clientId) {
   try {
@@ -1775,6 +1780,7 @@ function getMastersheet(clientId) {
 }
 function saveMastersheet(clientId, data) {
   try { localStorage.setItem(mastersheetKey(clientId), JSON.stringify(data)); } catch (e) {}
+  schedulePush();
 }
 function restoreMastersheetDefaults(clientId) {
   if (!DEFAULT_MASTERSHEETS[clientId]) return false;
@@ -1817,6 +1823,7 @@ function getResources(clientId) {
 }
 function saveResources(clientId, data) {
   try { localStorage.setItem(resourcesKey(clientId), JSON.stringify(data)); } catch (e) {}
+  schedulePush();
 }
 function batchesKey(clientId) { return 'batches_' + clientId; }
 function getBatches(clientId) {
@@ -1828,6 +1835,7 @@ function getBatches(clientId) {
 }
 function saveBatches(clientId, data) {
   try { localStorage.setItem(batchesKey(clientId), JSON.stringify(data)); } catch (e) {}
+  schedulePush();
 }
 
 // TODO: CLICKUP SYNC (batches) — once a ClickUp connector is wired in, mirror
@@ -1894,6 +1902,7 @@ function loadOptionSets() {
 let OPTION_SETS = loadOptionSets();
 function saveOptionSets() {
   try { localStorage.setItem(OPTIONS_KEY, JSON.stringify(OPTION_SETS)); } catch (e) {}
+  schedulePush();
 }
 function getCategoryColor(name) {
   return OPTION_SETS.categoryColors[name] || CATEGORY_COLOR_FALLBACK;
@@ -2708,9 +2717,36 @@ function collectFeedbackAndMastersheet() {
   return { feedback: feedback, mastersheet: mastersheet, resources: resources, batches: batches };
 }
 
-function doExport() {
+function collectFullState() {
   const extra = collectFeedbackAndMastersheet();
-  const payload = { clients: APP.clients, feedback: extra.feedback, mastersheet: extra.mastersheet, resources: extra.resources, batches: extra.batches, options: OPTION_SETS };
+  return { clients: APP.clients, feedback: extra.feedback, mastersheet: extra.mastersheet, resources: extra.resources, batches: extra.batches, options: OPTION_SETS };
+}
+
+// Applies a full state payload (same shape as collectFullState()/the export
+// file) to localStorage + APP. Used by both "Import a file" and "pull from
+// the shared backend" — same logic either way. While applying, remote pushes
+// are suppressed so we don't immediately echo the data we just received
+// straight back to the server (or, worse, clobber a newer write that landed
+// on the server in between).
+let APPLYING_REMOTE = false;
+function applyFullState(d, opts) {
+  opts = opts || {};
+  APPLYING_REMOTE = true;
+  try {
+    if (d.clients) { APP.clients = { ...DEFAULT_CLIENTS, ...d.clients }; saveState(); }
+    if (d.feedback) { Object.keys(d.feedback).forEach(function (cid) { saveFeedback(cid, d.feedback[cid]); }); }
+    if (d.mastersheet) { Object.keys(d.mastersheet).forEach(function (cid) { saveMastersheet(cid, d.mastersheet[cid]); }); }
+    if (d.resources) { Object.keys(d.resources).forEach(function (cid) { saveResources(cid, d.resources[cid]); }); }
+    if (d.batches) { Object.keys(d.batches).forEach(function (cid) { saveBatches(cid, d.batches[cid]); }); }
+    if (d.options) { OPTION_SETS = Object.assign({}, OPTION_SETS, d.options); saveOptionSets(); }
+  } finally {
+    APPLYING_REMOTE = false;
+  }
+  if (!opts.silent) { renderSidebar(); renderMain(); }
+}
+
+function doExport() {
+  const payload = collectFullState();
   const b = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const u = URL.createObjectURL(b);
   const a = document.createElement('a'); a.href = u; a.download = 'creative_platform.json'; a.click();
@@ -2722,22 +2758,91 @@ function doImport(e) {
   reader.onload = ev => {
     try {
       const d = JSON.parse(ev.target.result);
-      if (d.clients) { APP.clients = { ...DEFAULT_CLIENTS, ...d.clients }; saveState(); }
-      if (d.feedback) { Object.keys(d.feedback).forEach(function (cid) { saveFeedback(cid, d.feedback[cid]); }); }
-      if (d.mastersheet) { Object.keys(d.mastersheet).forEach(function (cid) { saveMastersheet(cid, d.mastersheet[cid]); }); }
-      if (d.resources) { Object.keys(d.resources).forEach(function (cid) { saveResources(cid, d.resources[cid]); }); }
-      if (d.batches) { Object.keys(d.batches).forEach(function (cid) { saveBatches(cid, d.batches[cid]); }); }
-      if (d.options) { OPTION_SETS = Object.assign({}, OPTION_SETS, d.options); saveOptionSets(); }
-      renderSidebar(); renderMain(); notify('Imported.');
+      applyFullState(d);
+      notify('Imported.');
+      pushSharedState();
     } catch(err) { alert('Invalid file.'); }
   };
   reader.readAsText(f);
+}
+
+// ─── Shared backend sync (Vercel KV via /api/state) ────────────────────────────
+// Everything above still reads/writes localStorage first (so the app works
+// instantly and offline). On top of that, every save schedules a debounced
+// push of the FULL app state to /api/state, and on load we pull the shared
+// state down. If the shared store is empty (first time it's ever connected),
+// we push this browser's current data up instead of overwriting it — so
+// whichever device turns shared storage on first becomes the seed for
+// everyone else, instead of anyone's edits getting wiped.
+let SYNC_STATUS = 'idle'; // idle | syncing | offline | unavailable
+let pushTimer = null;
+
+function setSyncStatus(status) {
+  SYNC_STATUS = status;
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const labels = {
+    idle: '&#9679; Synced',
+    syncing: 'Syncing…',
+    offline: '&#9679; Offline — saved on this device only',
+    unavailable: 'Shared storage not connected yet'
+  };
+  const colors = { idle: '#16a34a', syncing: 'var(--text-3)', offline: '#d97706', unavailable: 'var(--text-3)' };
+  el.innerHTML = labels[status] || '';
+  el.style.color = colors[status] || 'var(--text-3)';
+}
+
+function schedulePush() {
+  if (APPLYING_REMOTE) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushSharedState, 800);
+}
+
+async function pushSharedState() {
+  try {
+    setSyncStatus('syncing');
+    const resp = await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state: collectFullState() })
+    });
+    if (!resp.ok) {
+      const data = await resp.json().catch(function () { return {}; });
+      setSyncStatus(data.error && data.error.indexOf('not connected') > -1 ? 'unavailable' : 'offline');
+      return;
+    }
+    setSyncStatus('idle');
+  } catch (e) {
+    setSyncStatus('offline');
+  }
+}
+
+async function pullSharedState() {
+  try {
+    const resp = await fetch('/api/state');
+    const data = await resp.json();
+    if (!resp.ok) {
+      setSyncStatus(data.error && data.error.indexOf('not connected') > -1 ? 'unavailable' : 'offline');
+      return;
+    }
+    if (data.state) {
+      applyFullState(data.state);
+      setSyncStatus('idle');
+    } else {
+      // Shared store is empty — seed it with what's already in this browser.
+      pushSharedState();
+    }
+  } catch (e) {
+    setSyncStatus('offline');
+  }
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 loadState();
 renderSidebar();
 renderMain();
+setSyncStatus('syncing');
+pullSharedState();
 </script>
 </body>
 </html>
