@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creative Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --border: #e5e5e2;
+    --border-strong: #d0d0cc;
+    --text: #1a1a18;
+    --text-2: #6b6b67;
+    --text-3: #9e9e9a;
+    --accent: #1a1a18;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --green-border: #bbf7d0;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --red-border: #fecaca;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --blue-border: #bfdbfe;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Layout */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .sidebar-logo span { color: var(--text-3); font-weight: 400; }
+  .sidebar-section { padding: 12px 12px 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-3); }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    margin: 1px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-2);
+    transition: background 0.1s, color 0.1s;
+    border: none;
+    background: none;
+    width: calc(100% - 12px);
+    text-align: left;
+    font-family: inherit;
+  }
+  .sidebar-item:hover { background: var(--bg); color: var(--text); }
+  .sidebar-item.active { background: var(--bg); color: var(--text); font-weight: 500; }
+  .sidebar-item .dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+  }
+
+  .main { flex: 1; min-width: 0; }
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-title { font-size: 14px; font-weight: 500; flex: 1; }
+  .content { padding: 28px 32px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.1s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--text-2); border-color: transparent; }
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+  .btn-danger { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+  }
+  .card-sm { padding: 16px 20px; }
+
+  /* Client cards */
+  .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .client-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .client-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .client-card-add {
+    border-style: dashed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 160px;
+    color: var(--text-3);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .client-card-add:hover { border-color: var(--border-strong); color: var(--text-2); }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff; flex-shrink: 0;
+  }
+
+  /* KPI Row */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; }
+  .kpi-label { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .badge-red { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+  .badge-gray { background: var(--bg); color: var(--text-2); border: 1px solid var(--border); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+
+  /* Tables */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-3); border-bottom: 1px solid var(--border);
+    white-space: nowrap; background: var(--surface);
+  }
+  .data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr { transition: background 0.1s; cursor: pointer; }
+  .data-table tbody tr:hover td { background: var(--bg); }
+  .data-table .name-col { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; gap: 0; }
+  .tab-btn {
+    padding: 10px 20px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; background: none; font-family: inherit;
+    color: var(--text-3); border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: color 0.1s;
+  }
+  .tab-btn:hover { color: var(--text-2); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
+
+  /* Steps */
+  .steps { display: flex; align-items: center; gap: 0; margin-bottom: 32px; }
+  .step-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--text-3); flex: 1;
+  }
+  .step-item.active { color: var(--text); }
+  .step-item.done { color: var(--green); }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    border: 1.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text-3);
+    flex-shrink: 0;
+  }
+  .step-item.active .step-num { background: var(--text); color: #fff; border-color: var(--text); }
+  .step-item.done .step-num { background: var(--green); color: #fff; border-color: var(--green); }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 8px; max-width: 40px; }
+
+  /* Form */
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+  .form-hint { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+  .form-input {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--border-strong); border-radius: var(--radius);
+    background: var(--surface); color: var(--text);
+    font-size: 13px; font-family: inherit; transition: border-color 0.1s;
+    appearance: none;
+  }
+  .form-input:focus { outline: none; border-color: var(--text); }
+  .form-input::placeholder { color: var(--text-3); }
+  textarea.form-input { resize: vertical; line-height: 1.5; }
+  select.form-input { cursor: pointer; }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg);
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--text); background: #f0f0ec; }
+  .drop-zone-icon { font-size: 32px; margin-bottom: 8px; color: var(--text-3); }
+  .drop-zone-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .drop-zone-sub { font-size: 12px; color: var(--text-3); }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 16px; border: 1px solid; }
+  .alert-red { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+  .alert-green { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  .alert-amber { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-border); }
+  .alert-blue { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
+
+  /* Misc */
+  .section-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+  .row { display: flex; gap: 16px; }
+  .col { flex: 1; min-width: 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .hidden { display: none !important; }
+
+  /* Inline edit */
+  .inline-edit {
+    width: 100%; font-size: 12px; padding: 3px 6px;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg); color: var(--text); font-family: inherit;
+  }
+  .inline-edit:focus { outline: none; border-color: var(--text); background: var(--surface); }
+
+  /* Funnel bars */
+  .funnel-row { display: flex; gap: 6px; align-items: flex-end; height: 100px; margin-bottom: 8px; }
+  .funnel-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .funnel-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; }
+  .funnel-val { font-size: 11px; font-weight: 600; }
+  .funnel-lbl { font-size: 10px; color: var(--text-3); text-align: center; }
+  .funnel-pct { font-size: 9px; color: var(--text-3); }
+
+  /* Scrollable table wrapper */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .table-wrap .data-table th:first-child, .table-wrap .data-table td:first-child { padding-left: 20px; }
+  .table-wrap .data-table th:last-child, .table-wrap .data-table td:last-child { padding-right: 20px; }
+
+  /* Analysis row */
+  .analysis-item {
+    display: flex; align-items: center; gap: 16px; padding: 14px 20px;
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    margin-bottom: 8px; cursor: pointer; background: var(--surface);
+    transition: border-color 0.15s;
+  }
+  .analysis-item:hover { border-color: var(--border-strong); }
+
+  /* Bar chart replacement */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .bar-label { width: 120px; flex-shrink: 0; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+  .bar-track { flex: 1; background: var(--bg); border-radius: 3px; height: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+  .bar-value { width: 80px; flex-shrink: 0; color: var(--text-2); font-weight: 500; }
+
+  /* Winner / loser items */
+  .signal-item { padding: 12px 16px; border-radius: var(--radius); margin-bottom: 8px; border: 1px solid; }
+  .signal-item .si-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .signal-item .si-meta { font-size: 11px; margin-top: 3px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 24px; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; color: var(--text-3); }
+  .empty h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .empty p { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
+
+  /* Report textarea */
+  #report-output {
+    width: 100%; min-height: 480px; padding: 20px;
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    background: var(--surface); font-family: 'Courier New', monospace;
+    font-size: 12px; line-height: 1.7; color: var(--text);
+    resize: vertical;
+  }
+  #report-output:focus { outline: none; border-color: var(--text); }
+
+  /* Notification */
+  .notif {
+    position: fixed; top: 16px; right: 16px;
+    background: var(--text); color: #fff;
+    padding: 10px 16px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; z-index: 999;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  }
+  .notif.show { opacity: 1; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Creative <span>intelligence</span></div>
+    <div style="padding: 8px 6px;">
+      <div class="sidebar-section">Clients</div>
+      <div id="sidebar-clients"></div>
+      <div class="sidebar-section" style="margin-top:8px">Feedback &amp; Tracking</div>
+      <div id="sidebar-tools"></div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn btn-secondary btn-sm" onclick="doExport()" style="flex:1">Export</button>
+      <label class="btn btn-secondary btn-sm" style="flex:1;cursor:pointer;justify-content:center">
+        Import
+        <input type="file" accept=".json" style="display:none" onchange="doImport(event)">
+      </label>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div id="topbar-actions"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ─── State ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'ci_v4';
+
+const DEFAULT_CLIENTS = {
+  asher: {
+    id: 'asher', name: 'Asher Health', color: '#2563eb', initials: 'AH',
+    description: 'Medical enablement infrastructure for wellness businesses',
+    offer: 'Turnkey medical stack (GLP-1, peptides, HRT) under the partner\'s brand. $497/mo subscription — no free trial. Partner never prescribes, never holds medication. Physician network + 503A pharmacy + patient care team, all in one portal. Profitable from first package sold.',
+    avatars: 'Broad, Gym & Fitness (Avatar 1), Med Spa (Avatar 2), Chiro (Avatar 4)',
+    funnelStages: 'Impressions, Clicks, LPV, Results',
+    resultMetric: 'Consult bookings (schedule_website)',
+    namingNotes: 'VSLQ = VSL Queen video. PROTEST = direct talking-head callout ("if you\'re a..."). TABLES = outdoor social proof video. ugly = intentionally low-production static. notebook-motion = animated handwritten format. chiro / medspa / gym suffix = avatar-specific variant. SSW_ASHER_C1 = first batch foundational creatives.',
+    knownWinners: 'Image 4 | JP — dark navy static, "Legally Add Peptides in 48 Hours", kills legality objection in line 1\nproduct-shot-chiro — plain dark static, lowest CPM in Chiro set, 27 results\nPROTEST_CHIRO_1 — "If you\'re a chiropractor..." talking head, CPL $75\nWinner v1 | Woman | Video — Stripe payment hook, revenue framing\nnotebook-gym-motion — animated notebook, CPL $70, lowest CPM in Gym set\nmedspa-ugly — plain white static, "Same GLP-1 Program, A Fraction Of The Cost"',
+    knownWarnings: 'PROTEST_GYM_1 — $433 spend, 0 results. Same format earned CPL $75 in Chiro — protest format is Chiro-only\nVSLQ 4 — 4.36% CTR but 49% click→LPV. Landing page mismatch, not a creative problem\nAnimated phone UI formats — 0 results across all avatars. Belongs in retargeting, not cold\nOverhead video format — 0 results in every avatar\nDo NOT market Asher as a GLP-1 company. It is a medical enablement platform',
+    analyses: []
+  },
+  nwac: {
+    id: 'nwac', name: 'NWAC', color: '#16a34a', initials: 'NW',
+    description: 'New Wealth Advisors Club — two separate webinar funnels: Triplex and Intro',
+    offer: 'Two funnels running simultaneously. TRIPLEX: teaches the Triplex Method — converting one property into multiple rentable units via ADUs/JADUs. Ads drive webinar registrations. Audience: aspiring/early-stage real estate investors who feel priced out. INTRO: introduction to the NWAC real estate investment club for potential new members. Different audience and creative angle from Triplex — never mix data from both funnels in the same analysis.',
+    avatars: 'Triplex — California (SSW_ prefix), So-California, OR/AZ/WA (NWAC_ prefix)\nIntro — Broad, Interest-based (real estate, investing)',
+    funnelStages: 'Impressions, Clicks, LPV, Add-to-Wishlist (lead proxy)',
+    resultMetric: 'Add-to-wishlist (webinar registration proxy)',
+    namingNotes: 'TRIPLEX ADS: SSW_ prefix = California/So-Cal ad sets. NWAC_ prefix = OR/AZ/WA generic-state. FakePR = news-style static. TeamBREAKING = breaking-news format. AerialNEWS = aerial photo news. 3-Units-1-Mortgage = core Triplex value prop video. California messaging can use ADU/JADU directly. OR/AZ/WA must stay generic — not every property qualifies.\nINTRO ADS: separate naming convention from Triplex. When a CSV contains both funnels, split them into separate analyses — one per funnel — before drawing conclusions.',
+    knownWinners: 'TRIPLEX — FakePR_TeamBREAKING - Copia (CA): $4,480 spend, 30 results\nTRIPLEX — Static_New_FakePR (CA): $1,375, 11 results, cheapest CPM\nTRIPLEX — 3-Units-1-Mortgage (So-Cal): $3,354, 17 results\nTRIPLEX — Static_New_FakePR - Copy (So-Cal): CPM $43, 7 results',
+    knownWarnings: 'TRIPLEX — OR/AZ/WA funnel anomaly: 17% click→LPV vs ~88% CA but 28% LPV→result. Possible tracking/pixel issue — investigate before optimizing\nTRIPLEX — CA/So-Cal: strong top (88% click→LPV) but only 2–3% LPV→result — post-landing is the bottleneck\nNEVER aggregate Triplex and Intro data in the same analysis — separate funnels, separate audiences, separate conclusions',
+    analyses: []
+  }
+};
+
+let APP = {
+  clients: { ...DEFAULT_CLIENTS },
+  view: 'home',
+  clientId: null,
+  analysisId: null,
+  tab: 'dashboard',
+  // new analysis wizard
+  wizard: { step: 1, name: '', dateRange: '', notes: '', rawCSV: '', parsed: null, cls: [] }
+};
+
+// ─── Storage ─────────────────────────────────────────────────────────────────
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ clients: APP.clients })); } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) { const d = JSON.parse(s); if (d.clients) APP.clients = { ...DEFAULT_CLIENTS, ...d.clients }; }
+  } catch(e) {}
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+function notify(msg) {
+  const el = document.getElementById('notif');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function toN(v) { const f = parseFloat(String(v||0).replace(/[$,%\s]/g,'')); return isNaN(f) ? 0 : f; }
+
+function fmtMoney(v) {
+  if (v >= 1000000) return '$' + (v/1000000).toFixed(1) + 'M';
+  if (v >= 1000) return '$' + (v/1000).toFixed(1) + 'k';
+  return '$' + v.toFixed(0);
+}
+function fmtPct(v) { return v.toFixed(2) + '%'; }
+function fmtNum(v) { return v >= 1000 ? (v/1000).toFixed(1)+'k' : String(Math.round(v)); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── CSV Parser ───────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  if (!text || !text.trim()) return { error: 'No data provided.', rows: [], headers: [] };
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return { error: 'Need at least a header row and one data row.', rows: [], headers: [] };
+
+  function parseLine(line) {
+    const vals = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    vals.push(cur.trim());
+    return vals;
+  }
+
+  const headerVals = parseLine(lines[0]);
+  const headers = headerVals.map(h => h.replace(/^"|"$/g,'').trim());
+  if (headers.length < 2) return { error: 'Headers not detected. Make sure CSV uses commas as delimiters.', rows: [], headers: [] };
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = parseLine(lines[i]);
+    const row = {};
+    headers.forEach((h, j) => { row[h] = (vals[j] || '').replace(/^"|"$/g,'').trim(); });
+    rows.push(row);
+  }
+  return { error: null, headers, rows };
+}
+
+const COL_MAP = {
+  spend: ['amount spent (usd)', 'spend', 'cost', 'amount spent'],
+  impressions: ['impressions', 'impr'],
+  clicks: ['link clicks', 'clicks'],
+  ctr: ['ctr (link click-through rate)', 'ctr (all)', 'ctr', 'click-through rate'],
+  cpm: ['cpm (cost per 1,000 impressions) (usd)', 'cpm (cost per 1,000 impressions)', 'cpm'],
+  lpv: ['landing page views', 'landing page view', 'lpv'],
+  results: ['results'],
+  cpl: ['cost per results', 'cost per lead (usd)', 'cost per lead', 'cpl'],
+  adName: ['ad name', 'ad', 'creative name', 'name'],
+  adSet: ['ad set name', 'adset name', 'ad set', 'adset'],
+  reach: ['reach'],
+  frequency: ['frequency']
+};
+
+function detectColumns(headers) {
+  const lh = headers.map(h => h.toLowerCase().trim());
+  const found = {};
+  for (const [key, aliases] of Object.entries(COL_MAP)) {
+    for (const alias of aliases) {
+      const idx = lh.findIndex(h => h === alias || h.includes(alias));
+      if (idx >= 0) { found[key] = headers[idx]; break; }
+    }
+  }
+  return found;
+}
+
+function enrichRows(rawRows, colMap, clientId) {
+  return rawRows.map(r => {
+    const o = { ...r };
+    o._adName = colMap.adName ? r[colMap.adName] : (r[Object.keys(r)[0]] || '');
+    o._adSet  = colMap.adSet  ? r[colMap.adSet]  : '';
+    o._spend      = toN(colMap.spend       ? r[colMap.spend]       : 0);
+    o._impressions= toN(colMap.impressions  ? r[colMap.impressions] : 0);
+    o._clicks     = toN(colMap.clicks      ? r[colMap.clicks]      : 0);
+    o._ctr        = toN(colMap.ctr         ? r[colMap.ctr]         : 0);
+    o._cpm        = toN(colMap.cpm         ? r[colMap.cpm]         : 0);
+    o._lpv        = toN(colMap.lpv         ? r[colMap.lpv]         : 0);
+    o._results    = toN(colMap.results     ? r[colMap.results]     : 0);
+    o._reach      = toN(colMap.reach       ? r[colMap.reach]       : 0);
+    return o;
+  }).filter(r => r._adName && r._adName.length > 0);
+}
+
+function classifyAd(name, clientId) {
+  const n = (name||'').toLowerCase();
+  const r = { format: 'Unknown', avatar: 'Unknown', conf: 'low' };
+  if (clientId === 'asher') {
+    if (n.includes('vslq'))                               { r.format = 'VSL Queen';          r.conf = 'high'; }
+    else if (n.includes('winner'))                        { r.format = 'Video – winner';      r.conf = 'high'; }
+    else if (n.includes('protest'))                       { r.format = 'Protest video';       r.conf = 'high'; }
+    else if (n.includes('overhead'))                      { r.format = 'Overhead video';      r.conf = 'high'; }
+    else if (n.includes('notebook') && n.includes('motion')) { r.format = 'Animated – notebook'; r.conf = 'high'; }
+    else if ((n.includes('phone') || n.includes('phone-ui')) && n.includes('motion')) { r.format = 'Animated – phone UI'; r.conf = 'high'; }
+    else if (n.includes('carousel') || n.includes('caro')) { r.format = 'Carousel';           r.conf = 'high'; }
+    else if (n.includes('tables'))                        { r.format = 'Tables video';        r.conf = 'high'; }
+    else if (n.includes('image') || n.includes('static') || n.includes('ugly') || n.includes('product-shot') || n.includes('editorial') || n.includes('board') || n.includes('sign') || n.includes('sticknote')) { r.format = 'Static'; r.conf = 'high'; }
+    else if (n.includes('video') || n.includes('batch'))  { r.format = 'Video';              r.conf = 'medium'; }
+
+    if (n.includes('gym') || n.includes('fitness'))       r.avatar = 'Gym';
+    else if (n.includes('medspa') || n.includes('med_spa') || n.includes('med-spa')) r.avatar = 'Med Spa';
+    else if (n.includes('chiro'))                         r.avatar = 'Chiro';
+    else if (n.includes('broad') || n.includes('| jp') || n.includes('woman') || n.includes('group')) r.avatar = 'Broad';
+  } else if (clientId === 'nwac') {
+    if (n.includes('fakepr') || n.includes('aerial') || n.includes('teambreaking')) { r.format = 'Static – FakePR'; r.conf = 'high'; }
+    else if (n.includes('editorial'))        { r.format = 'Static – editorial'; r.conf = 'high'; }
+    else if (n.includes('3-units') || n.includes('mortgage')) { r.format = 'Video – founder'; r.conf = 'high'; }
+    else if (n.includes('carousel') || n.includes('window')) { r.format = 'Carousel'; r.conf = 'high'; }
+    else if (n.includes('anim'))             { r.format = 'Animation'; r.conf = 'high'; }
+    else if (n.includes('static') || n.includes('new_board') || n.includes('sticknote')) { r.format = 'Static – other'; r.conf = 'high'; }
+    else if (n.includes('video'))            { r.format = 'Video'; r.conf = 'medium'; }
+
+    if (n.startsWith('nwac_'))               r.avatar = 'OR/AZ/WA';
+    else if (n.includes('so-california') || n.includes('so_california')) r.avatar = 'So-California';
+    else if (n.startsWith('ssw_'))           r.avatar = 'California';
+  }
+  return r;
+}
+
+function signalOf(r) {
+  if (r._results >= 3 && r._spend > 100) return 'winner';
+  if (r._results >= 1 && r._spend > 50)  return 'watch';
+  if (r._results === 0 && r._spend > 200) return 'low';
+  return 'insuff';
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function nav(view, extra = {}) {
+  APP = { ...APP, view, ...extra };
+  renderSidebar();
+  renderMain();
+  window.scrollTo(0, 0);
+}
+
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('sidebar-clients');
+  let html = '';
+  Object.values(APP.clients).forEach(c => {
+    const active = APP.clientId === c.id;
+    html += `<button class="sidebar-item ${active ? 'active' : ''}" onclick="nav('client',{clientId:'${c.id}',analysisId:null,tab:'dashboard'})">
+      <span class="dot" style="background:${esc(c.color)}"></span>
+      ${esc(c.name)}
+    </button>`;
+  });
+  html += `<button class="sidebar-item" onclick="nav('addClient')">
+    <span style="font-size:16px;line-height:1;color:var(--text-3)">+</span> Add client
+  </button>`;
+  el.innerHTML = html;
+
+  const toolsEl = document.getElementById('sidebar-tools');
+  if (toolsEl) {
+    const fbActive = APP.view === 'feedback';
+    const msActive = APP.view === 'mastersheet';
+    const firstClientId = Object.keys(APP.clients)[0] || '';
+    toolsEl.innerHTML = `
+      <button class="sidebar-item ${fbActive ? 'active' : ''}" onclick="nav('feedback',{clientId:'${APP.clientId || firstClientId}'})">
+        <span style="font-size:13px;line-height:1;color:var(--text-3)">&#128172;</span> Client Feedback
+      </button>
+      <button class="sidebar-item ${msActive ? 'active' : ''}" onclick="nav('mastersheet',{})">
+        <span style="font-size:13px;line-height:1;color:var(--text-3)">&#128203;</span> Creative Mastersheet
+      </button>`;
+  }
+}
+
+// ─── Main renderer ────────────────────────────────────────────────────────────
+function renderMain() {
+  const topTitle = document.getElementById('topbar-title');
+  const topActions = document.getElementById('topbar-actions');
+  const content = document.getElementById('content');
+  topActions.innerHTML = '';
+
+  if (APP.view === 'home') {
+    topTitle.textContent = 'Dashboard';
+    renderHome(content);
+  } else if (APP.view === 'client') {
+    const c = APP.clients[APP.clientId];
+    topTitle.textContent = c ? c.name : 'Client';
+    if (c) {
+      topActions.innerHTML = `
+        <button class="btn btn-secondary btn-sm" onclick="nav('editContext',{clientId:'${c.id}'})">Edit context</button>
+        <button class="btn btn-primary btn-sm" onclick="startWizard('${c.id}')">+ New analysis</button>`;
+    }
+    renderClient(content);
+  } else if (APP.view === 'wizard') {
+    topTitle.textContent = 'New analysis';
+    renderWizard(content);
+  } else if (APP.view === 'analysis') {
+    const c = APP.clients[APP.clientId];
+    const a = c && c.analyses ? c.analyses.find(x => x.id === APP.analysisId) : null;
+    topTitle.textContent = a ? a.name : 'Analysis';
+    if (a) {
+      topActions.innerHTML = `<button class="btn btn-ghost btn-sm" onclick="nav('client',{clientId:'${APP.clientId}',analysisId:null})">← Back to ${esc(c.name)}</button>`;
+    }
+    renderAnalysis(content);
+  } else if (APP.view === 'addClient') {
+    topTitle.textContent = 'Add client';
+    renderAddClient(content);
+  } else if (APP.view === 'editContext') {
+    const c = APP.clients[APP.clientId];
+    topTitle.textContent = 'Edit context — ' + (c ? c.name : '');
+    renderEditContext(content);
+  } else if (APP.view === 'feedback') {
+    topTitle.textContent = 'Client Feedback';
+    renderFeedback(content);
+  } else if (APP.view === 'mastersheet') {
+    topTitle.textContent = 'Creative Mastersheet';
+    renderMastersheet(content);
+  }
+}
+
+// ─── Home ─────────────────────────────────────────────────────────────────────
+function renderHome(el) {
+  let html = `<p style="color:var(--text-2);margin-bottom:24px;font-size:14px">Select a client to view their dashboard or start a new analysis.</p>
+  <div class="client-grid">`;
+
+  Object.values(APP.clients).forEach(c => {
+    const analyses = c.analyses || [];
+    const latest = analyses[analyses.length - 1];
+    const totalRes = analyses.reduce((s, a) => s + (a.rows||[]).reduce((ss,r) => ss+(r._results||0),0), 0);
+    const winners = (c.knownWinners||'').split('\n').filter(Boolean);
+    const warnings = (c.knownWarnings||'').split('\n').filter(Boolean);
+    html += `<div class="client-card" onclick="nav('client',{clientId:'${c.id}',analysisId:null,tab:'dashboard'})">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="avatar" style="background:${esc(c.color)}">${esc(c.initials)}</div>
+        <div>
+          <div style="font-weight:600;font-size:15px">${esc(c.name)}</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:1px">${esc(c.description)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <div style="background:var(--bg);border-radius:var(--radius);padding:10px 12px">
+          <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:600">Analyses</div>
+          <div style="font-size:20px;font-weight:600">${analyses.length}</div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius);padding:10px 12px">
+          <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:600">Total results</div>
+          <div style="font-size:20px;font-weight:600">${totalRes}</div>
+        </div>
+      </div>
+      ${winners.slice(0,2).map(w => `<div style="font-size:11px;color:var(--green);margin-bottom:2px">✓ ${esc(w)}</div>`).join('')}
+      ${warnings.slice(0,1).map(w => `<div style="font-size:11px;color:var(--amber);margin-top:4px">⚠ ${esc(w.slice(0,60))}${w.length>60?'…':''}</div>`).join('')}
+      ${latest ? `<div style="font-size:11px;color:var(--text-3);margin-top:8px">Latest: ${esc(latest.name)}</div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary btn-sm" style="flex:1" onclick="event.stopPropagation();startWizard('${c.id}')">New analysis</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();nav('client',{clientId:'${c.id}',analysisId:null,tab:'dashboard'})">Dashboard</button>
+      </div>
+    </div>`;
+  });
+
+  html += `<div class="client-card client-card-add" onclick="nav('addClient')">
+    <div style="font-size:28px">+</div>
+    <div style="font-size:13px;font-weight:500">Add client</div>
+  </div></div>`;
+
+  el.innerHTML = html;
+}
+
+// ─── Client ───────────────────────────────────────────────────────────────────
+function renderClient(el) {
+  const c = APP.clients[APP.clientId];
+  if (!c) { el.innerHTML = '<div class="empty"><p>Client not found.</p></div>'; return; }
+  const analyses = c.analyses || [];
+  const winners = (c.knownWinners||'').split('\n').filter(Boolean);
+  const warnings = (c.knownWarnings||'').split('\n').filter(Boolean);
+  const avatarList = (c.avatars||'').split(',').map(s=>s.trim()).filter(Boolean);
+
+  let html = `<div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+    <div class="avatar" style="background:${esc(c.color)};width:48px;height:48px;border-radius:12px;font-size:14px">${esc(c.initials)}</div>
+    <div>
+      <h2 style="font-size:20px;font-weight:700;letter-spacing:-0.3px">${esc(c.name)}</h2>
+      <p style="font-size:13px;color:var(--text-2);margin-top:2px">${esc(c.offer||c.description)}</p>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:28px">
+    <div class="card card-sm">
+      <div class="section-title">Audiences / avatars</div>
+      ${avatarList.map(a => `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-2)">${esc(a)}</div>`).join('')}
+    </div>
+    <div class="card card-sm">
+      <div class="section-title">Account signals</div>
+      ${winners.slice(0,4).map(w => `<div style="font-size:12px;color:var(--green);padding:2px 0">✓ ${esc(w)}</div>`).join('')}
+      ${warnings.slice(0,3).map(w => `<div style="font-size:12px;color:var(--amber);padding:2px 0;margin-top:3px">⚠ ${esc(w)}</div>`).join('')}
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h3 style="font-size:14px;font-weight:600">Analyses</h3>
+  </div>`;
+
+  if (!analyses.length) {
+    html += `<div class="empty">
+      <div class="empty-icon">📊</div>
+      <h3>No analyses yet</h3>
+      <p>Import your first Meta Ads CSV to get started.</p>
+      <button class="btn btn-primary" onclick="startWizard('${c.id}')">Start first analysis</button>
+    </div>`;
+  } else {
+    [...analyses].reverse().forEach(a => {
+      const rows = a.rows || [];
+      const spend = rows.reduce((s,r) => s+(r._spend||0), 0);
+      const results = rows.reduce((s,r) => s+(r._results||0), 0);
+      const cpl = results > 0 ? spend/results : 0;
+      html += `<div class="analysis-item" onclick="nav('analysis',{clientId:'${c.id}',analysisId:'${a.id}',tab:'dashboard'})">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${esc(a.name)}</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px">${esc(a.dateRange||'')}${a.dateRange?' · ':''}${rows.length} ads</div>
+        </div>
+        <div style="display:flex;gap:20px;font-size:12px;color:var(--text-2)">
+          <span>Spend <strong style="color:var(--text)">${fmtMoney(spend)}</strong></span>
+          <span>Results <strong style="color:var(--text)">${results}</strong></span>
+          ${cpl>0?`<span>CPL <strong style="color:var(--text)">${fmtMoney(cpl)}</strong></span>`:''}
+        </div>
+        <button class="btn btn-secondary btn-sm">Open →</button>
+        <button class="btn btn-danger btn-xs" onclick="event.stopPropagation();deleteAnalysis('${c.id}','${a.id}')">Delete</button>
+      </div>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+function deleteAnalysis(cid, aid) {
+  if (!confirm('Delete this analysis?')) return;
+  APP.clients[cid].analyses = APP.clients[cid].analyses.filter(a => a.id !== aid);
+  saveState();
+  renderMain();
+  notify('Analysis deleted.');
+}
+
+// ─── Wizard ───────────────────────────────────────────────────────────────────
+function startWizard(clientId) {
+  APP.wizard = { step: 1, name: '', dateRange: '', notes: '', rawCSV: '', parsed: null, cls: [] };
+  nav('wizard', { clientId });
+}
+
+function renderWizard(el) {
+  const c = APP.clients[APP.clientId];
+  const w = APP.wizard;
+  const steps = ['Batch info', 'Import data', 'Review', 'Confirm'];
+
+  let stepsHtml = '<div class="steps">';
+  steps.forEach((s, i) => {
+    const state = i+1 < w.step ? 'done' : i+1 === w.step ? 'active' : '';
+    const icon = i+1 < w.step ? '✓' : i+1;
+    stepsHtml += `<div class="step-item ${state}"><div class="step-num">${icon}</div><span>${s}</span></div>`;
+    if (i < steps.length-1) stepsHtml += '<div class="step-line"></div>';
+  });
+  stepsHtml += '</div>';
+
+  let stepContent = '';
+
+  if (w.step === 1) {
+    stepContent = `<div style="max-width:500px">
+      <div class="form-group">
+        <label class="form-label">Batch name *</label>
+        <input class="form-input" id="w-name" placeholder="First batch Jun–Jul 2026" value="${esc(w.name)}" autofocus>
+        <div class="form-hint">Give this batch a clear name so you can find it later.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date range</label>
+        <input class="form-input" id="w-date" placeholder="Jun 22 – Jul 21, 2026" value="${esc(w.dateRange)}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Batch notes <span style="font-weight:400;color:var(--text-3)">(optional)</span></label>
+        <textarea class="form-input" id="w-notes" rows="3" placeholder="New landing pages, budget changes, ad sets included…">${esc(w.notes)}</textarea>
+        <div class="form-hint">Only applies to this analysis — doesn't overwrite the client context.</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="nav('client',{clientId:'${APP.clientId}',analysisId:null})">Cancel</button>
+        <button class="btn btn-primary" onclick="wizardStep1()">Continue →</button>
+      </div>
+    </div>`;
+  }
+
+  else if (w.step === 2) {
+    stepContent = `<div style="max-width:620px">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:20px">Upload your CSV export from Meta Ads Manager, or paste the data directly.</p>
+
+      <div class="drop-zone" id="dropzone" onclick="document.getElementById('csv-file').click()">
+        <div class="drop-zone-icon">↑</div>
+        <div class="drop-zone-title">Drop your CSV file here</div>
+        <div class="drop-zone-sub">or click to browse · .csv files only</div>
+        <input type="file" id="csv-file" accept=".csv,.txt" style="display:none">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:12px;color:var(--text-3)">or paste CSV data</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+
+      <div class="form-group">
+        <textarea class="form-input" id="csv-paste" rows="10" style="font-family:monospace;font-size:11px;line-height:1.5" placeholder="Ad name,Ad set name,Amount spent (USD),Impressions,CPM (cost per 1,000 impressions) (USD),Link clicks,CTR (link click-through rate),Landing page views,Results,...&#10;Image 4 | JP,Broad | Advantage+,13429.48,137063,97.98,1552,1.13,1171,90,...">${esc(w.rawCSV)}</textarea>
+      </div>
+
+      <div id="csv-preview"></div>
+      <div id="csv-error"></div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="wizardBack()">← Back</button>
+        <button class="btn btn-primary" id="parse-btn" onclick="wizardStep2()">Parse and continue →</button>
+      </div>
+    </div>`;
+  }
+
+  else if (w.step === 3) {
+    const parsed = w.parsed || [];
+    const tSpend = parsed.reduce((s,r) => s+(r._spend||0), 0);
+    const tResults = parsed.reduce((s,r) => s+(r._results||0), 0);
+    stepContent = `<div>
+      <div class="alert alert-blue" style="margin-bottom:20px">
+        <strong>${parsed.length} ads detected</strong> · ${fmtMoney(tSpend)} total spend · ${tResults} total results.
+        Edit any format or avatar below before saving.
+      </div>
+      <div class="table-wrap" style="max-height:360px;overflow-y:auto;margin-bottom:20px">
+        <table class="data-table">
+          <thead><tr>
+            <th>Ad name</th><th>Ad set</th>
+            <th>Spend</th><th>Results</th>
+            <th>Format</th><th>Avatar</th><th>Confidence</th>
+          </tr></thead>
+          <tbody id="cls-tbody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="wizardBack()">← Back</button>
+        <button class="btn btn-primary" onclick="wizardStep3()">Continue →</button>
+      </div>
+    </div>`;
+  }
+
+  else if (w.step === 4) {
+    const parsed = w.parsed || [];
+    const spend = parsed.reduce((s,r) => s+(r._spend||0), 0);
+    const results = parsed.reduce((s,r) => s+(r._results||0), 0);
+    stepContent = `<div style="max-width:440px">
+      <div class="card" style="margin-bottom:24px">
+        <div class="section-title">Ready to save</div>
+        ${[['Batch', w.name], ['Date range', w.dateRange||'—'], ['Client', c.name], ['Ads imported', parsed.length], ['Total spend', fmtMoney(spend)], ['Total results', results]]
+          .map(([k,v]) => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-2)"><span>${k}</span><strong style="color:var(--text)">${v}</strong></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="wizardBack()">← Back</button>
+        <button class="btn btn-primary" onclick="wizardSave()">Save and open dashboard →</button>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = `<div style="max-width:800px">${stepsHtml}${stepContent}</div>`;
+
+  // Wire up step 2 interactions
+  if (w.step === 2) {
+    const fileInput = document.getElementById('csv-file');
+    const dropzone = document.getElementById('dropzone');
+    const ta = document.getElementById('csv-paste');
+
+    if (fileInput) fileInput.addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => { ta.value = ev.target.result; showCSVPreview(ev.target.result); };
+      reader.readAsText(f);
+    });
+
+    if (dropzone) {
+      dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+      dropzone.addEventListener('drop', e => {
+        e.preventDefault(); dropzone.classList.remove('drag');
+        const f = e.dataTransfer.files[0]; if (!f) return;
+        const reader = new FileReader();
+        reader.onload = ev => { ta.value = ev.target.result; showCSVPreview(ev.target.result); };
+        reader.readAsText(f);
+      });
+    }
+
+    if (ta) {
+      ta.addEventListener('input', () => {
+        if (ta.value.trim().length > 20) showCSVPreview(ta.value);
+      });
+      if (w.rawCSV) showCSVPreview(w.rawCSV);
+    }
+  }
+
+  // Wire up step 3 table
+  if (w.step === 3) {
+    const tbody = document.getElementById('cls-tbody');
+    if (tbody) {
+      (w.parsed||[]).forEach((r, i) => {
+        const cl = w.cls[i] || {};
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'default';
+        tr.innerHTML = `<td class="name-col" style="max-width:160px">${esc(r._adName)}</td>
+          <td style="color:var(--text-2);font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r._adSet)}</td>
+          <td>${fmtMoney(r._spend)}</td>
+          <td>${r._results||0}</td>
+          <td><input class="inline-edit" value="${esc(cl.format||'')}" style="width:140px" data-i="${i}" data-k="format" onchange="APP.wizard.cls[parseInt(this.dataset.i)][this.dataset.k]=this.value"></td>
+          <td><input class="inline-edit" value="${esc(cl.avatar||'')}" style="width:100px" data-i="${i}" data-k="avatar" onchange="APP.wizard.cls[parseInt(this.dataset.i)][this.dataset.k]=this.value"></td>
+          <td><span class="badge ${cl.conf==='high'?'badge-green':cl.conf==='medium'?'badge-amber':'badge-gray'}">${esc(cl.conf||'low')}</span></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  }
+}
+
+function showCSVPreview(text) {
+  const prevEl = document.getElementById('csv-preview');
+  const errEl  = document.getElementById('csv-error');
+  if (!prevEl || !errEl) return;
+  const { error, headers, rows } = parseCSV(text);
+  if (error) {
+    errEl.innerHTML  = `<div class="alert alert-red">${esc(error)}</div>`;
+    prevEl.innerHTML = '';
+    return;
+  }
+  errEl.innerHTML = '';
+  const cm = detectColumns(headers);
+  const detected = Object.entries(cm).map(([k,v]) => `<span style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;white-space:nowrap"><strong>${k}</strong>: ${esc(v)}</span>`).join(' ');
+  const missing  = ['spend','impressions','clicks','results','adName'].filter(k => !cm[k]);
+  prevEl.innerHTML = `<div class="alert alert-green" style="margin-top:4px">
+    <strong>${rows.length} rows detected · ${headers.length} columns</strong>
+    <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${detected}</div>
+    ${missing.length ? `<div style="margin-top:6px;color:var(--amber)">⚠ Not mapped: ${missing.join(', ')} — check your column names</div>` : ''}
+  </div>`;
+}
+
+function wizardStep1() {
+  const name = (document.getElementById('w-name')||{}).value || '';
+  if (!name.trim()) { alert('Enter a batch name.'); document.getElementById('w-name').focus(); return; }
+  APP.wizard.name      = name.trim();
+  APP.wizard.dateRange = ((document.getElementById('w-date')||{}).value||'').trim();
+  APP.wizard.notes     = ((document.getElementById('w-notes')||{}).value||'').trim();
+  APP.wizard.step      = 2;
+  renderMain();
+}
+
+function wizardStep2() {
+  const ta = document.getElementById('csv-paste');
+  const raw = (ta ? ta.value : APP.wizard.rawCSV) || '';
+  if (!raw.trim()) { alert('Paste or upload CSV data.'); return; }
+  APP.wizard.rawCSV = raw;
+
+  const { error, rows } = parseCSV(raw);
+  if (error) { document.getElementById('csv-error').innerHTML = `<div class="alert alert-red">${esc(error)}</div>`; return; }
+  const cm = detectColumns(Object.keys(rows[0]||{}));
+  const enriched = enrichRows(rows, cm, APP.clientId);
+  if (!enriched.length) { document.getElementById('csv-error').innerHTML = '<div class="alert alert-red">No valid ad rows found. Make sure the CSV has an "Ad name" column.</div>'; return; }
+
+  APP.wizard.parsed = enriched;
+  APP.wizard.cls    = enriched.map(r => ({ adName: r._adName, ...classifyAd(r._adName, APP.clientId) }));
+  APP.wizard.step   = 3;
+  renderMain();
+}
+
+function wizardStep3() {
+  APP.wizard.step = 4;
+  renderMain();
+}
+
+function wizardBack() {
+  if (APP.wizard.step > 1) { APP.wizard.step--; renderMain(); }
+  else nav('client', { clientId: APP.clientId, analysisId: null });
+}
+
+function wizardSave() {
+  const a = {
+    id: Date.now().toString(),
+    name: APP.wizard.name,
+    dateRange: APP.wizard.dateRange,
+    notes: APP.wizard.notes,
+    createdAt: new Date().toISOString(),
+    rows: APP.wizard.parsed,
+    classifications: APP.wizard.cls,
+    reportText: ''
+  };
+  if (!APP.clients[APP.clientId].analyses) APP.clients[APP.clientId].analyses = [];
+  APP.clients[APP.clientId].analyses.push(a);
+  saveState();
+  notify('Analysis saved.');
+  nav('analysis', { clientId: APP.clientId, analysisId: a.id, tab: 'dashboard' });
+}
+
+// ─── Analysis ─────────────────────────────────────────────────────────────────
+function renderAnalysis(el) {
+  const c = APP.clients[APP.clientId];
+  const a = c && c.analyses ? c.analyses.find(x => x.id === APP.analysisId) : null;
+  if (!a) { el.innerHTML = '<div class="empty"><p>Analysis not found.</p></div>'; return; }
+
+  const rows   = a.rows || [];
+  const cls    = a.classifications || [];
+  const enrich = rows.map((r,i) => ({
+    ...r,
+    _format:  cls[i]?.format  || 'Unknown',
+    _avatar:  cls[i]?.avatar  || r._adSet || 'Unknown',
+    _signal:  signalOf(r)
+  }));
+
+  const tSpend   = enrich.reduce((s,r) => s+(r._spend||0), 0);
+  const tResults = enrich.reduce((s,r) => s+(r._results||0), 0);
+  const tImpr    = enrich.reduce((s,r) => s+(r._impressions||0), 0);
+  const tClicks  = enrich.reduce((s,r) => s+(r._clicks||0), 0);
+  const tLPV     = enrich.reduce((s,r) => s+(r._lpv||0), 0);
+  const avgCPL   = tResults > 0 ? tSpend/tResults : 0;
+  const avgCTR   = tImpr    > 0 ? tClicks/tImpr*100 : 0;
+  const avgCPM   = tImpr    > 0 ? tSpend/tImpr*1000 : 0;
+  const c2l      = tClicks  > 0 ? tLPV/tClicks*100 : 0;
+  const l2r      = tLPV     > 0 ? tResults/tLPV*100 : 0;
+
+  // Ad set agg
+  const asAgg = {};
+  enrich.forEach(r => {
+    const k = r._adSet || 'Unknown';
+    if (!asAgg[k]) asAgg[k] = { n:k, spend:0, results:0, impressions:0, clicks:0, lpv:0 };
+    asAgg[k].spend       += r._spend||0;
+    asAgg[k].results     += r._results||0;
+    asAgg[k].impressions += r._impressions||0;
+    asAgg[k].clicks      += r._clicks||0;
+    asAgg[k].lpv         += r._lpv||0;
+  });
+  const asArr = Object.values(asAgg).map(d => ({
+    ...d,
+    cpl: d.results>0 ? d.spend/d.results : 0,
+    ctr: d.impressions>0 ? d.clicks/d.impressions*100 : 0,
+    cpm: d.impressions>0 ? d.spend/d.impressions*1000 : 0
+  })).sort((a,b) => b.spend-a.spend);
+
+  // Format agg
+  const fmAgg = {};
+  enrich.forEach(r => {
+    const k = r._format;
+    if (!fmAgg[k]) fmAgg[k] = { n:k, spend:0, results:0, count:0 };
+    fmAgg[k].spend   += r._spend||0;
+    fmAgg[k].results += r._results||0;
+    fmAgg[k].count   ++;
+  });
+  const fmArr = Object.values(fmAgg).sort((a,b) => b.spend-a.spend);
+
+  const winners   = enrich.filter(r => r._signal==='winner').sort((a,b) => b._results-a._results);
+  const watching  = enrich.filter(r => r._signal==='watch').sort((a,b) => b._results-a._results);
+  const underperf = enrich.filter(r => r._signal==='low').sort((a,b) => b._spend-a._spend);
+
+  const maxSpend = Math.max(...asArr.map(d => d.spend), 1);
+
+  el.innerHTML = `
+  <div class="tabs">
+    <button class="tab-btn ${APP.tab==='dashboard'?'active':''}" onclick="APP.tab='dashboard';renderAnalysis(document.getElementById('content'))">Dashboard</button>
+    <button class="tab-btn ${APP.tab==='creatives'?'active':''}" onclick="APP.tab='creatives';renderAnalysis(document.getElementById('content'))">Creatives</button>
+    <button class="tab-btn ${APP.tab==='report'?'active':''}" onclick="APP.tab='report';renderAnalysis(document.getElementById('content'))">Written report</button>
+  </div>
+  <div id="tab-body"></div>`;
+
+  const body = document.getElementById('tab-body');
+
+  if (APP.tab === 'dashboard') {
+    const cplColor = avgCPL>0&&avgCPL<150 ? 'var(--green)' : avgCPL>250 ? 'var(--red)' : 'var(--text)';
+    const metaBase = 'https://adsmanager.facebook.com/adsmanager/manage/ads?filter_by=ad_name&filter_value=';
+
+    // Avatar aggregates
+    const avAgg = {};
+    enrich.forEach(r => {
+      const k = r._avatar || 'Unknown';
+      if (!avAgg[k]) avAgg[k] = { n:k, spend:0, results:0, impressions:0, clicks:0, lpv:0 };
+      avAgg[k].spend += r._spend||0; avAgg[k].results += r._results||0;
+      avAgg[k].impressions += r._impressions||0; avAgg[k].clicks += r._clicks||0; avAgg[k].lpv += r._lpv||0;
+    });
+    const avArr = Object.values(avAgg).map(d => ({...d,
+      cpl: d.results>0 ? d.spend/d.results : 0,
+      ctr: d.impressions>0 ? d.clicks/d.impressions*100 : 0,
+      cpm: d.impressions>0 ? d.spend/d.impressions*1000 : 0,
+      c2l: d.clicks>0 ? d.lpv/d.clicks*100 : 0,
+      l2r: d.lpv>0 ? d.results/d.lpv*100 : 0
+    })).sort((a,b) => b.spend-a.spend);
+
+    // Top 5 best / worst
+    const top5   = [...enrich].filter(r => r._results>0 && r._spend>50)
+      .sort((a,b) => (a._spend/Math.max(a._results,1))-(b._spend/Math.max(b._results,1))).slice(0,5);
+    const worst5 = [...enrich].filter(r => r._results===0 && r._spend>100)
+      .sort((a,b) => b._spend-a._spend).slice(0,5);
+
+    // Build takeaways — priority: format×avatar cross-performance first
+    const tk = [];
+
+    // 1. Format × avatar: which format is working, for which avatar
+    const fmAvAgg = {};
+    enrich.forEach(r => {
+      const k = (r._format||'Unknown') + '|||' + (r._avatar||'Unknown');
+      if (!fmAvAgg[k]) fmAvAgg[k] = { format:r._format||'Unknown', avatar:r._avatar||'Unknown', spend:0, results:0, count:0 };
+      fmAvAgg[k].spend   += r._spend||0;
+      fmAvAgg[k].results += r._results||0;
+      fmAvAgg[k].count++;
+    });
+    const fmAvArr = Object.values(fmAvAgg)
+      .filter(d => d.results>0 && d.spend>50)
+      .map(d => ({...d, cpl: d.spend/d.results}))
+      .sort((a,b) => a.cpl-b.cpl);
+
+    if (fmAvArr.length>0) {
+      const best = fmAvArr[0];
+      const worst = [...Object.values(fmAvAgg)]
+        .filter(d => d.results===0 && d.spend>100)
+        .sort((a,b) => b.spend-a.spend)[0];
+      let fmTk = best.format+' is the strongest format for '+best.avatar+' — '+best.results+' result'+(best.results!==1?'s':'')+' at '+fmtMoney(best.cpl)+' CPL.';
+      if (worst) fmTk += ' '+worst.format+' has 0 results in '+worst.avatar+' on '+fmtMoney(worst.spend)+' spend.';
+      tk.push(fmTk);
+    } else if (Object.values(fmAvAgg).some(d=>d.spend>50)) {
+      // No results yet but can still flag what format/avatar got the most spend
+      const topSpend = Object.values(fmAvAgg).sort((a,b)=>b.spend-a.spend)[0];
+      tk.push('No format-avatar combination has results yet. Most spend on '+topSpend.format+' / '+topSpend.avatar+' ('+fmtMoney(topSpend.spend)+') with 0 conversions.');
+    }
+
+    // 2. Best avatar overall
+    const topAv = avArr.find(d => d.results>0);
+    const bottomAv = [...avArr].filter(d=>d.results===0&&d.spend>100).sort((a,b)=>b.spend-a.spend)[0];
+    if (topAv) {
+      let avTk = topAv.n+' is the most efficient avatar — '+topAv.results+' results at '+fmtMoney(topAv.cpl)+' CPL.';
+      if (bottomAv) avTk += ' '+bottomAv.n+' has spent '+fmtMoney(bottomAv.spend)+' with 0 results.';
+      tk.push(avTk);
+    }
+
+    // 3. Account CPL health
+    if (avgCPL>0) tk.push(avgCPL<150 ? 'Account CPL is '+fmtMoney(avgCPL)+' — healthy.' : 'Account CPL is '+fmtMoney(avgCPL)+' — above target. Concentrate spend on what\'s converting.');
+
+    // 4. Top individual performer
+    if (top5.length>0) tk.push('Best ad: '+top5[0]._adName.slice(0,45)+' ('+top5[0]._format+', '+top5[0]._avatar+') — '+top5[0]._results+' results at '+fmtMoney(top5[0]._spend/top5[0]._results)+' CPL.');
+
+    // 5. Funnel bottleneck or biggest waste
+    if (c2l>0 && c2l<70) tk.push('Click→LPV is '+fmtPct(c2l)+' — below 70%. Likely a landing page or tracking issue, not a creative problem.');
+    else if (l2r>0 && l2r<5) tk.push('LPV→result is '+fmtPct(l2r)+' — post-click conversion is the bottleneck. The creative is working; the landing page or offer is not.');
+    else if (worst5.length>0) tk.push(worst5[0]._adName.slice(0,45)+' ('+worst5[0]._format+', '+worst5[0]._avatar+') — '+fmtMoney(worst5[0]._spend)+' spent with 0 results. Pause candidate.');
+
+    // Pre-build HTML strings (avoids template literal complexity)
+    const tkHtml = tk.map((t,i) =>
+      '<div style="display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4">'
+      +'<span style="opacity:0.35;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px">'+(i+1)+'</span>'
+      +'<span>'+esc(t)+'</span></div>').join('');
+
+    const avRowsHtml = avArr.map(d => {
+      const cc = d.cpl>0&&d.cpl<150?'var(--green)':d.cpl>250?'var(--red)':'var(--text)';
+      return '<tr style="cursor:default">'
+        +'<td style="font-weight:500">'+esc(d.n)+'</td>'
+        +'<td>'+fmtMoney(d.spend)+'</td>'
+        +'<td>'+d.results+'</td>'
+        +'<td style="color:'+cc+';font-weight:600">'+(d.results>0?fmtMoney(d.cpl):'—')+'</td>'
+        +'<td>'+fmtPct(d.ctr)+'</td>'
+        +'<td>'+fmtMoney(d.cpm)+'</td>'
+        +'<td style="color:'+(d.c2l>0&&d.c2l<70?'var(--amber)':'var(--text)')+'">'+(d.clicks>0?fmtPct(d.c2l):'—')+'</td>'
+        +'<td style="color:'+(d.l2r>0&&d.l2r<5?'var(--amber)':'var(--text)')+'">'+(d.lpv>0?fmtPct(d.l2r):'—')+'</td>'
+        +'</tr>';
+    }).join('');
+
+    const buildMetaLink = (r, style) => '<a href="'+metaBase+encodeURIComponent(r._adName)+'" target="_blank" rel="noopener" style="'+style+'">&#8599; View in Meta</a>';
+
+    const top5Html = top5.length===0 ? '<p style="font-size:13px;color:var(--text-3)">No ads with results yet.</p>' :
+      top5.map((r,i) => {
+        const cpl = r._spend/Math.max(r._results,1);
+        return '<div class="signal-item" style="background:var(--green-bg);border-color:var(--green-border);margin-bottom:8px">'
+          +'<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">'
+          +'<span style="font-size:10px;font-weight:700;color:var(--green);opacity:0.5">'+(i+1)+'</span>'
+          +'<span style="font-size:12px;font-weight:600;color:#14532d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r._adName)+'</span></div>'
+          +'<div style="font-size:11px;color:var(--green);margin-bottom:6px">'+r._results+' results · <strong>'+fmtMoney(cpl)+' CPL</strong> · '+fmtPct(r._ctr)+' CTR · '+fmtMoney(r._spend)+' spend</div>'
+          +buildMetaLink(r,'font-size:11px;color:var(--blue);text-decoration:none;border:1px solid var(--blue-border);background:var(--blue-bg);padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;')
+          +'</div>';
+      }).join('');
+
+    const worst5Html = worst5.length===0 ? '<p style="font-size:13px;color:var(--text-3)">None with sufficient spend.</p>' :
+      worst5.map((r,i) =>
+        '<div class="signal-item" style="background:var(--red-bg);border-color:var(--red-border);margin-bottom:8px">'
+        +'<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">'
+        +'<span style="font-size:10px;font-weight:700;color:var(--red);opacity:0.5">'+(i+1)+'</span>'
+        +'<span style="font-size:12px;font-weight:600;color:#7f1d1d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r._adName)+'</span></div>'
+        +'<div style="font-size:11px;color:var(--red);margin-bottom:6px"><strong>'+fmtMoney(r._spend)+' spent</strong> · 0 results · '+fmtPct(r._ctr)+' CTR</div>'
+        +buildMetaLink(r,'font-size:11px;color:var(--red);text-decoration:none;border:1px solid var(--red-border);background:var(--red-bg);padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;')
+        +'</div>'
+      ).join('');
+
+    const asBarHtml = asArr.map(d => {
+      const w = Math.round(d.spend/maxSpend*100);
+      const bc = d.cpl>0&&d.cpl<150?'var(--green)':d.cpl>250?'var(--red)':'#2563eb';
+      return '<div class="bar-row">'
+        +'<div class="bar-label" title="'+esc(d.n)+'">'+esc(d.n.length>16?d.n.slice(0,16)+'&#8230;':d.n)+'</div>'
+        +'<div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:'+bc+'"></div></div>'
+        +'<div class="bar-value">'+(d.results>0?'<span style="color:'+bc+'">'+fmtMoney(d.cpl)+' CPL</span>':fmtMoney(d.spend))+'</div></div>';
+    }).join('');
+
+    const asTableHtml = asArr.map(d => {
+      const cc = d.cpl>0&&d.cpl<150?'var(--green)':d.cpl>250?'var(--red)':'var(--text)';
+      return '<tr style="cursor:default">'
+        +'<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)">'+esc(d.n)+'</td>'
+        +'<td>'+fmtMoney(d.spend)+'</td><td>'+d.results+'</td>'
+        +'<td style="color:'+cc+'">'+(d.results>0?fmtMoney(d.cpl):'—')+'</td>'
+        +'<td>'+fmtPct(d.ctr)+'</td><td>'+fmtMoney(d.cpm)+'</td></tr>';
+    }).join('');
+
+    const funnelHtml = (() => {
+      if (tImpr===0) return '';
+      const stages = [{l:'Impressions',v:tImpr,c:'#93c5fd'},{l:'Clicks',v:tClicks,c:'#60a5fa'},{l:'LPV',v:tLPV,c:'#3b82f6'},{l:'Results',v:tResults,c:'#1d4ed8'}];
+      return stages.map((s,i) => {
+        const prev = i>0?stages[i-1].v:0;
+        const pct  = prev>0?Math.round(s.v/prev*100):100;
+        const h    = Math.max(4,Math.round(s.v/tImpr*90));
+        return '<div class="funnel-bar-wrap">'
+          +'<div class="funnel-val">'+fmtNum(s.v)+'</div>'
+          +'<div class="funnel-bar" style="height:'+h+'px;background:'+s.c+'"></div>'
+          +'<div class="funnel-lbl">'+s.l+'</div>'
+          +(i>0?'<div class="funnel-pct">'+pct+'%</div>':'')+'</div>';
+      }).join('');
+    })();
+
+    const fmTableHtml = fmArr.map(d => {
+      const cc = d.results>0&&d.spend/d.results<150?'var(--green)':d.results>0&&d.spend/d.results>250?'var(--red)':'var(--text)';
+      return '<tr style="cursor:default">'
+        +'<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.n)+'</td>'
+        +'<td style="color:var(--text-3)">'+d.count+'</td>'
+        +'<td>'+fmtMoney(d.spend)+'</td><td>'+d.results+'</td>'
+        +'<td style="color:'+cc+'">'+(d.results>0?fmtMoney(d.spend/d.results):'—')+'</td></tr>';
+    }).join('');
+
+    const winnersHtml = (winners.length===0?'<p style="font-size:13px;color:var(--text-3)">None with sufficient data yet.</p>':'')
+      + winners.slice(0,5).map(r =>
+        '<div class="signal-item" style="background:var(--green-bg);border-color:var(--green-border)">'
+        +'<div class="si-name" style="color:#14532d">'+esc(r._adName)+'</div>'
+        +'<div class="si-meta" style="color:var(--green)">'+r._results+' results · CPL '+fmtMoney(r._spend/Math.max(r._results,1))+' · CTR '+fmtPct(r._ctr)+'</div></div>'
+      ).join('')
+      + watching.slice(0,3).map(r =>
+        '<div class="signal-item" style="background:var(--amber-bg);border-color:var(--amber-border)">'
+        +'<div class="si-name" style="color:#78350f">'+esc(r._adName)+'</div>'
+        +'<div class="si-meta" style="color:var(--amber)">'+r._results+' result'+(r._results!==1?'s':'')+' · CPL '+fmtMoney(r._spend/Math.max(r._results,1))+' · low data</div></div>'
+      ).join('');
+
+    const lowHtml = (underperf.length===0?'<p style="font-size:13px;color:var(--text-3)">None flagged.</p>':'')
+      + underperf.slice(0,5).map(r =>
+        '<div class="signal-item" style="background:var(--red-bg);border-color:var(--red-border)">'
+        +'<div class="si-name" style="color:#7f1d1d">'+esc(r._adName)+'</div>'
+        +'<div class="si-meta" style="color:var(--red)">'+fmtMoney(r._spend)+' spend · 0 results · '+fmtPct(r._ctr)+' CTR</div></div>'
+      ).join('');
+
+    body.innerHTML =
+      // Takeaways
+      '<div style="background:var(--text);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:24px;color:#fff">'
+      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.4;margin-bottom:12px">Main takeaways</div>'
+      +'<div style="display:flex;flex-direction:column;gap:8px">'+tkHtml+'</div></div>'
+      // KPIs
+      +'<div class="kpi-grid">'
+      +'<div class="kpi-card"><div class="kpi-label">Total spend</div><div class="kpi-value">'+fmtMoney(tSpend)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">Results</div><div class="kpi-value">'+tResults+'</div><div class="kpi-sub">'+esc(c.resultMetric||'')+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">CPL</div><div class="kpi-value" style="color:'+cplColor+'">'+(avgCPL>0?fmtMoney(avgCPL):'—')+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">CTR</div><div class="kpi-value">'+fmtPct(avgCTR)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">CPM</div><div class="kpi-value">'+fmtMoney(avgCPM)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">Click &#8594; LPV</div><div class="kpi-value">'+fmtPct(c2l)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">LPV &#8594; result</div><div class="kpi-value">'+fmtPct(l2r)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">Active ads</div><div class="kpi-value">'+rows.length+'</div></div>'
+      +'</div>'
+      +'<div class="divider"></div>'
+      // Avatar table
+      +'<div style="margin-bottom:28px"><div class="section-title">Performance by avatar</div>'
+      +'<div class="table-wrap"><table class="data-table" style="font-size:12px">'
+      +'<thead><tr><th>Avatar</th><th>Spend</th><th>Results</th><th>CPL</th><th>CTR</th><th>CPM</th><th>Click&#8594;LPV</th><th>LPV&#8594;Result</th></tr></thead>'
+      +'<tbody>'+avRowsHtml+'</tbody></table></div></div>'
+      // Ad set bar + table | funnel + format
+      +'<div class="two-col" style="margin-bottom:28px">'
+      +'<div><div class="section-title">Spend and CPL by ad set</div>'
+      +'<div class="bar-chart">'+asBarHtml+'</div>'
+      +'<div style="margin-top:20px"><div class="section-title">Ad set details</div>'
+      +'<div class="table-wrap"><table class="data-table" style="font-size:12px">'
+      +'<thead><tr><th>Ad set</th><th>Spend</th><th>Results</th><th>CPL</th><th>CTR</th><th>CPM</th></tr></thead>'
+      +'<tbody>'+asTableHtml+'</tbody></table></div></div></div>'
+      +'<div>'
+      +(tImpr>0?'<div class="section-title">Funnel</div><div class="funnel-row">'+funnelHtml+'</div>':'')
+      +'<div class="section-title" style="margin-top:24px">Format performance</div>'
+      +'<div class="table-wrap"><table class="data-table" style="font-size:12px">'
+      +'<thead><tr><th>Format</th><th>Ads</th><th>Spend</th><th>Results</th><th>CPL</th></tr></thead>'
+      +'<tbody>'+fmTableHtml+'</tbody></table></div>'
+      +'</div></div>'
+      +'<div class="divider"></div>'
+      // Top 5 best / worst with links
+      +'<div class="two-col" style="margin-bottom:28px">'
+      +'<div><div class="section-title" style="color:var(--green)">&#10003; Top 5 best performers</div>'
+      +'<p style="font-size:11px;color:var(--text-3);margin-bottom:10px">By CPL &#183; min 1 result &#183; click to open in Meta</p>'
+      +top5Html+'</div>'
+      +'<div><div class="section-title" style="color:var(--red)">&#9888; Top 5 worst performers</div>'
+      +'<p style="font-size:11px;color:var(--text-3);margin-bottom:10px">0 results &#183; most spend &#183; pause candidates</p>'
+      +worst5Html+'</div></div>'
+      +'<div class="divider"></div>'
+      // All winners / underperformers
+      +'<div class="two-col">'
+      +'<div><div class="section-title" style="color:var(--green)">All winners &amp; watches</div>'+winnersHtml+'</div>'
+      +'<div><div class="section-title" style="color:var(--red)">All underperformers</div>'+lowHtml+'</div>'
+      +'</div>';
+  }
+  else if (APP.tab === 'creatives') {
+    const adSets = [...new Set(enrich.map(r => r._adSet).filter(Boolean))];
+    const formats = [...new Set(enrich.map(r => r._format).filter(Boolean))];
+    body.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <input id="srch" class="form-input" style="width:200px" placeholder="Search ad name…" oninput="filterTable()">
+      <select id="f-adset" class="form-input" style="width:auto" onchange="filterTable()">
+        <option value="">All ad sets</option>
+        ${adSets.map(s => `<option>${esc(s)}</option>`).join('')}
+      </select>
+      <select id="f-fmt" class="form-input" style="width:auto" onchange="filterTable()">
+        <option value="">All formats</option>
+        ${formats.map(s => `<option>${esc(s)}</option>`).join('')}
+      </select>
+      <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-2)">
+        <input type="checkbox" id="hide-insuff" onchange="filterTable()"> Hide low-data ads
+      </label>
+      <span id="row-count" style="font-size:12px;color:var(--text-3);margin-left:auto"></span>
+    </div>
+    <div class="table-wrap">
+    <table class="data-table" id="creative-table">
+      <thead><tr>
+        <th style="min-width:180px">Ad</th>
+        <th>Format</th><th>Avatar</th>
+        <th>Spend</th><th>CTR</th><th>LPV</th>
+        <th>Results</th><th>CPL</th><th>Signal</th><th>Link</th>
+      </tr></thead>
+      <tbody id="creative-tbody"></tbody>
+    </table></div>`;
+    window._ciEnriched = enrich;
+    filterTable();
+  }
+
+  else if (APP.tab === 'report') {
+    const report = a.reportText || '';
+    body.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="generateReport('${APP.clientId}','${APP.analysisId}')">
+        ${report ? 'Regenerate report' : 'Generate written report'}
+      </button>
+      ${report ? `<button class="btn btn-secondary" onclick="copyReport()">Copy text</button>` : ''}
+      <span id="gen-status" style="font-size:12px;color:var(--text-3)"></span>
+    </div>
+    ${report
+      ? `<textarea id="report-output" onchange="updateReport('${APP.clientId}','${APP.analysisId}',this.value)">${esc(report)}</textarea>`
+      : `<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px;text-align:center;color:var(--text-2)">
+          <div style="font-size:15px;font-weight:500;margin-bottom:6px">No report yet</div>
+          <p style="font-size:13px">Click "Generate written report" to produce an analysis based on your data.</p>
+        </div>`}`;
+  }
+}
+
+window._ciEnriched = [];
+function filterTable() {
+  const enrich = window._ciEnriched || [];
+  const srch   = (document.getElementById('srch')?.value||'').toLowerCase();
+  const fSet   = document.getElementById('f-adset')?.value||'';
+  const fFmt   = document.getElementById('f-fmt')?.value||'';
+  const hideI  = document.getElementById('hide-insuff')?.checked||false;
+
+  const filtered = enrich.filter(r => {
+    if (fSet && r._adSet !== fSet) return false;
+    if (fFmt && r._format !== fFmt) return false;
+    if (hideI && r._signal === 'insuff') return false;
+    if (srch && !r._adName.toLowerCase().includes(srch)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('creative-tbody');
+  const countEl = document.getElementById('row-count');
+  if (countEl) countEl.textContent = `${filtered.length} ads`;
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+  filtered.forEach(r => {
+    const cpl = r._results>0 ? r._spend/r._results : 0;
+    const cplColor = cpl>0&&cpl<150 ? 'var(--green)' : cpl>250 ? 'var(--red)' : 'var(--text)';
+    const sigBadge = r._signal==='winner'  ? '<span class="badge badge-green">winner</span>'
+                   : r._signal==='watch'   ? '<span class="badge badge-amber">watch</span>'
+                   : r._signal==='low'     ? '<span class="badge badge-red">underperforming</span>'
+                   : '<span class="badge badge-gray">low data</span>';
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'default';
+    tr.innerHTML = `
+      <td class="name-col" style="max-width:200px;font-weight:${r._signal==='winner'?'600':'400'}">${esc(r._adName)}</td>
+      <td style="color:var(--text-2);font-size:12px">${esc(r._format)}</td>
+      <td style="color:var(--text-2);font-size:12px">${esc(r._avatar)}</td>
+      <td>${fmtMoney(r._spend)}</td>
+      <td>${fmtPct(r._ctr)}</td>
+      <td>${r._lpv||'—'}</td>
+      <td>${r._results||0}</td>
+      <td style="color:${cplColor}">${cpl>0?fmtMoney(cpl):'—'}</td>
+      <td>${sigBadge}</td>
+      <td><a href="https://adsmanager.facebook.com/adsmanager/manage/ads?filter_by=ad_name&filter_value=${encodeURIComponent(r._adName)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--blue);text-decoration:none;">&#8599;</a></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── Report generation ────────────────────────────────────────────────────────
+async function generateReport(cid, aid) {
+  const c  = APP.clients[cid];
+  const a  = c.analyses.find(x => x.id === aid);
+  if (!a) return;
+  const rows = a.rows||[], cls = a.classifications||[];
+  const enrich = rows.map((r,i) => ({...r,_format:cls[i]?.format||'Unknown',_avatar:cls[i]?.avatar||r._adSet||'Unknown',_signal:signalOf(r)}));
+  const tSpend = enrich.reduce((s,r)=>s+(r._spend||0),0);
+  const tRes   = enrich.reduce((s,r)=>s+(r._results||0),0);
+  const asAgg={};enrich.forEach(r=>{const k=r._adSet||'Unknown';if(!asAgg[k])asAgg[k]={n:k,spend:0,results:0};asAgg[k].spend+=r._spend||0;asAgg[k].results+=r._results||0;});
+  const fmAgg={};enrich.forEach(r=>{const k=r._format;if(!fmAgg[k])fmAgg[k]={n:k,spend:0,results:0,count:0};fmAgg[k].spend+=r._spend||0;fmAgg[k].results+=r._results||0;fmAgg[k].count++;});
+
+  const summary = `Client: ${c.name}
+Batch: ${a.name} | ${a.dateRange||''}
+Account: ${fmtMoney(tSpend)} spend, ${tRes} results, CPL ${tRes>0?fmtMoney(tSpend/tRes):'—'}
+
+Ad sets:
+${Object.values(asAgg).map(d=>`${d.n}: ${fmtMoney(d.spend)}, ${d.results} results, CPL ${d.results>0?fmtMoney(d.spend/d.results):'—'}`).join('\n')}
+
+Formats:
+${Object.values(fmAgg).map(d=>`${d.n}: ${d.count} ads, ${fmtMoney(d.spend)}, ${d.results} results, CPL ${d.results>0?fmtMoney(d.spend/d.results):'—'}`).join('\n')}
+
+Winners:
+${enrich.filter(r=>r._signal==='winner').map(r=>`${r._adName}: ${r._results} results, CPL ${fmtMoney(r._spend/r._results)}`).join('\n')||'None'}
+
+Underperformers:
+${enrich.filter(r=>r._signal==='low').map(r=>`${r._adName}: ${fmtMoney(r._spend)}, 0 results`).join('\n')||'None'}
+
+Client context:
+${c.namingNotes||''}
+${a.notes||''}`;
+
+  const st = document.getElementById('gen-status');
+  if (st) st.textContent = 'Generating…';
+
+  const promptText = 'You are a performance creative analyst. Write a concise creative performance analysis. '
+    + 'Structure: 1) Executive takeaways (max 5 bullets) 2) Performance by ad set (key numbers + 1-2 line diagnosis each) '
+    + '3) Format trends 4) Winners (name + why + data) 5) Underperformers 6) Next-batch recommendations (max 5). '
+    + 'Be direct, no fluff, no basic metric definitions. Use "early signal", "not enough to conclude", "worth testing".\n\n'
+    + summary;
+
+  try {
+    const resp = await fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText, maxTokens: 1000 })
+    });
+    const data = await resp.json();
+    if (!resp.ok) { if (st) st.textContent = data.error || 'Error generating report.'; return; }
+    const text = data.text || 'Could not generate report.';
+    c.analyses = c.analyses.map(x => x.id===aid ? {...x, reportText:text} : x);
+    saveState();
+    if (st) st.textContent = '';
+    const ta = document.getElementById('report-output');
+    if (ta) { ta.value = text; }
+    else { APP.tab='report'; renderAnalysis(document.getElementById('content')); }
+    notify('Report generated.');
+  } catch(e) {
+    if (st) st.textContent = 'Error — check connection and retry.';
+  }
+}
+
+function updateReport(cid, aid, val) {
+  const c = APP.clients[cid];
+  if (c) { c.analyses = c.analyses.map(x => x.id===aid ? {...x, reportText:val} : x); saveState(); }
+}
+function copyReport() {
+  const ta = document.getElementById('report-output');
+  if (ta) { navigator.clipboard?.writeText(ta.value); notify('Copied to clipboard.'); }
+}
+
+// ─── Add Client ───────────────────────────────────────────────────────────────
+function renderAddClient(el) {
+  el.innerHTML = `
+  <div style="max-width:580px">
+    <div class="card" style="margin-bottom:20px">
+      <div class="section-title">Paste a strategy document (optional)</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px">Paste a positioning doc, brief, or any description and the app will extract the key fields automatically using AI.</p>
+      <textarea class="form-input" id="ctx-doc" rows="5" placeholder="Paste positioning doc or brief…"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <button class="btn btn-secondary btn-sm" onclick="extractContext()">Extract fields from document</button>
+        <span id="ctx-status" style="font-size:12px;color:var(--text-3)"></span>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="form-group">
+        <label class="form-label">Client name *</label>
+        <input class="form-input" id="cl-name" placeholder="e.g. Asher Health, NWAC, IRC" autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="cl-desc" placeholder="What the business does">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Offer</label>
+      <input class="form-input" id="cl-offer" placeholder="What they sell and pricing">
+    </div>
+    <div class="two-col">
+      <div class="form-group">
+        <label class="form-label">Avatars / audiences <span style="font-weight:400;color:var(--text-3)">(comma-separated)</span></label>
+        <input class="form-input" id="cl-avatars" placeholder="Gym Owners, Med Spa Owners">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Primary result metric</label>
+        <input class="form-input" id="cl-result" placeholder="Consult bookings">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Naming conventions</label>
+      <textarea class="form-input" id="cl-naming" rows="3" placeholder="SSW_ = California, VSLQ = VSL Queen…"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="nav('home')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewClient()">Create client</button>
+    </div>
+  </div>`;
+}
+
+async function extractContext() {
+  const txt = document.getElementById('ctx-doc')?.value; if (!txt) return;
+  const st = document.getElementById('ctx-status'); if (st) st.textContent = 'Extracting…';
+  const extractPrompt = 'Extract these fields and return ONLY valid JSON: name, description, offer, avatars (comma-separated), resultMetric, namingNotes.\n\n' + txt;
+
+  try {
+    const resp = await fetch('/api/classify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: extractPrompt, maxTokens: 800 })
+    });
+    const data = await resp.json();
+    if (!resp.ok) { if (st) st.textContent = data.error || 'Could not parse — fill in manually.'; return; }
+    const text = data.text || '';
+    const d = JSON.parse(text.replace(/```json|```/g,'').trim());
+    const map = {name:'cl-name',description:'cl-desc',offer:'cl-offer',avatars:'cl-avatars',resultMetric:'cl-result',namingNotes:'cl-naming'};
+    for (const [k,id] of Object.entries(map)) { const el=document.getElementById(id); if(el&&d[k]) el.value=d[k]; }
+    if (st) st.textContent = 'Done.';
+  } catch(e) { if (st) st.textContent = 'Could not parse — fill in manually.'; }
+}
+
+function saveNewClient() {
+  const name = document.getElementById('cl-name')?.value?.trim();
+  if (!name) { alert('Enter a client name.'); return; }
+  const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const colors = ['#2563eb','#16a34a','#d97706','#9333ea','#dc2626','#0891b2'];
+  const client = {
+    id, name, color: colors[Object.keys(APP.clients).length % colors.length],
+    initials: name.split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase(),
+    description: document.getElementById('cl-desc')?.value||'',
+    offer: document.getElementById('cl-offer')?.value||'',
+    avatars: document.getElementById('cl-avatars')?.value||'',
+    resultMetric: document.getElementById('cl-result')?.value||'',
+    namingNotes: document.getElementById('cl-naming')?.value||'',
+    knownWinners: '', knownWarnings: '', analyses: []
+  };
+  APP.clients[id] = client;
+  saveState();
+  notify('Client created.');
+  nav('client', { clientId: id, analysisId: null, tab: 'dashboard' });
+}
+
+// ─── Edit Context ─────────────────────────────────────────────────────────────
+function renderEditContext(el) {
+  const c = APP.clients[APP.clientId];
+  if (!c) return;
+  el.innerHTML = `
+  <div style="max-width:580px">
+    ${[
+      ['Description','ec-desc','text',c.description||''],
+      ['Offer','ec-offer','text',c.offer||''],
+      ['Avatars (comma-separated)','ec-avatars','text',c.avatars||''],
+      ['Primary result metric','ec-result','text',c.resultMetric||''],
+      ['Naming conventions','ec-naming','textarea',c.namingNotes||''],
+      ['Known winners (one per line)','ec-winners','textarea',c.knownWinners||''],
+      ['Known warnings (one per line)','ec-warnings','textarea',c.knownWarnings||''],
+    ].map(([l,id,t,v]) => `<div class="form-group">
+      <label class="form-label">${l}</label>
+      ${t==='textarea'
+        ? `<textarea class="form-input" id="${id}" rows="3">${esc(v)}</textarea>`
+        : `<input class="form-input" id="${id}" value="${esc(v)}">`
+      }
+    </div>`).join('')}
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="nav('client',{clientId:'${c.id}'})">Cancel</button>
+      <button class="btn btn-primary" onclick="saveContext('${c.id}')">Save context</button>
+    </div>
+  </div>`;
+}
+
+function saveContext(cid) {
+  const c = APP.clients[cid];
+  c.description  = document.getElementById('ec-desc')?.value||'';
+  c.offer        = document.getElementById('ec-offer')?.value||'';
+  c.avatars      = document.getElementById('ec-avatars')?.value||'';
+  c.resultMetric = document.getElementById('ec-result')?.value||'';
+  c.namingNotes  = document.getElementById('ec-naming')?.value||'';
+  c.knownWinners = document.getElementById('ec-winners')?.value||'';
+  c.knownWarnings= document.getElementById('ec-warnings')?.value||'';
+  saveState();
+  notify('Context saved.');
+  nav('client', { clientId: cid });
+}
+
+// ─── Feedback & Mastersheet storage ────────────────────────────────────────────
+// Keys are namespaced per-client and kept separate from ci_v4 (the clients/analyses key)
+// so imports/exports of one never clobber the other.
+function feedbackKey(clientId) { return 'feedback_' + clientId; }
+function mastersheetKey(clientId) { return 'mastersheet_' + clientId; }
+function newRowId() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function getFeedback(clientId) {
+  try {
+    const raw = localStorage.getItem(feedbackKey(clientId));
+    if (raw) { const d = JSON.parse(raw); return { learnings: d.learnings || [], ideas: d.ideas || [] }; }
+  } catch (e) {}
+  return { learnings: [], ideas: [] };
+}
+function saveFeedback(clientId, data) {
+  try { localStorage.setItem(feedbackKey(clientId), JSON.stringify(data)); } catch (e) {}
+}
+function getMastersheet(clientId) {
+  try {
+    const raw = localStorage.getItem(mastersheetKey(clientId));
+    if (raw) { const d = JSON.parse(raw); return { rows: d.rows || [] }; }
+  } catch (e) {}
+  return { rows: [] };
+}
+function saveMastersheet(clientId, data) {
+  try { localStorage.setItem(mastersheetKey(clientId), JSON.stringify(data)); } catch (e) {}
+}
+
+// TODO: SLACK SYNC — once a Slack connector is wired in, pull messages from the
+// client's connected Slack channels, extract feedback/learnings, and push rows
+// into getFeedback(clientId).learnings via saveFeedback (Source = "Slack").
+function syncFeedbackFromSlack(clientId) {
+  notify('Slack sync is not connected yet.');
+}
+
+// TODO: CLICKUP SYNC — once a ClickUp connector is wired in, pull tasks/comments
+// from the client's ClickUp space, extract feedback/learnings, and push rows into
+// getFeedback(clientId).learnings via saveFeedback (Source = "ClickUp").
+function syncFeedbackFromClickUp(clientId) {
+  notify('ClickUp sync is not connected yet.');
+}
+
+// ─── Client Feedback tab ───────────────────────────────────────────────────────
+const FEEDBACK_TYPES = ['Insight', 'Rule', 'Legal', 'Compliance', 'Avatar', 'Format', 'Copy', 'Other'];
+const FEEDBACK_SOURCES = ['Client call', 'Slack', 'ClickUp', 'Manual', 'Meeting notes'];
+const IDEA_CATEGORIES = ['Copy', 'Creative format', 'Avatar angle', 'Hook idea', 'Other'];
+let FEEDBACK_UI = { addLearningOpen: false, addIdeaOpen: false };
+
+function selectOptionsHtml(options, selected) {
+  return options.map(function (o) {
+    return '<option' + (o === selected ? ' selected' : '') + '>' + esc(o) + '</option>';
+  }).join('');
+}
+
+function renderFeedback(el) {
+  const clientIds = Object.keys(APP.clients);
+  if (!clientIds.length) { el.innerHTML = '<div class="empty"><p>Add a client first.</p></div>'; return; }
+  const clientId = APP.clients[APP.clientId] ? APP.clientId : clientIds[0];
+  const data = getFeedback(clientId);
+
+  let html = '';
+  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">'
+    + '<label class="form-label" style="margin:0">Client</label>'
+    + '<select class="form-input" id="fb-client-select" style="width:220px">'
+    + Object.values(APP.clients).map(function (cl) {
+        return '<option value="' + esc(cl.id) + '"' + (cl.id === clientId ? ' selected' : '') + '>' + esc(cl.name) + '</option>';
+      }).join('')
+    + '</select></div>';
+
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<h3 style="font-size:14px;font-weight:600">Learnings &amp; Rules</h3>'
+    + '<button class="btn btn-primary btn-sm" id="fb-add-learning-btn">+ Add row</button></div>'
+    + '<div id="fb-learning-form-wrap"></div>'
+    + '<div class="table-wrap" style="margin-bottom:32px"><table class="data-table">'
+    + '<thead><tr><th>Date</th><th>Do/Don&rsquo;t</th><th>Type</th><th>Category</th><th style="min-width:200px">Learning</th><th style="min-width:200px">Action/Takeaway</th><th>Source</th><th>URL</th><th></th></tr></thead>'
+    + '<tbody id="fb-learning-tbody"></tbody></table></div>';
+
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<h3 style="font-size:14px;font-weight:600">Creative Ideas</h3>'
+    + '<button class="btn btn-primary btn-sm" id="fb-add-idea-btn">+ Add row</button></div>'
+    + '<div id="fb-idea-form-wrap"></div>'
+    + '<div class="table-wrap"><table class="data-table">'
+    + '<thead><tr><th>Date</th><th>Category</th><th style="min-width:200px">Learning</th><th style="min-width:200px">Action/Takeaway</th><th>Source</th><th>URL</th><th></th></tr></thead>'
+    + '<tbody id="fb-idea-tbody"></tbody></table></div>';
+
+  el.innerHTML = html;
+
+  document.getElementById('fb-client-select').addEventListener('change', function (e) {
+    nav('feedback', { clientId: e.target.value });
+  });
+  document.getElementById('fb-add-learning-btn').addEventListener('click', function () {
+    FEEDBACK_UI.addLearningOpen = !FEEDBACK_UI.addLearningOpen;
+    renderLearningForm(clientId);
+  });
+  document.getElementById('fb-add-idea-btn').addEventListener('click', function () {
+    FEEDBACK_UI.addIdeaOpen = !FEEDBACK_UI.addIdeaOpen;
+    renderIdeaForm(clientId);
+  });
+
+  renderLearningForm(clientId);
+  renderLearningRows(clientId, data.learnings);
+  renderIdeaForm(clientId);
+  renderIdeaRows(clientId, data.ideas);
+}
+
+function renderLearningForm(clientId) {
+  const wrap = document.getElementById('fb-learning-form-wrap');
+  if (!wrap) return;
+  if (!FEEDBACK_UI.addLearningOpen) { wrap.innerHTML = ''; return; }
+  const today = new Date().toISOString().slice(0, 10);
+  wrap.innerHTML = '<div class="card card-sm" style="margin-bottom:14px;background:var(--blue-bg);border-color:var(--blue-border)">'
+    + '<div class="three-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Date</label><input type="date" class="form-input" id="fbl-date" value="' + today + '"></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Do/Don&rsquo;t</label><select class="form-input" id="fbl-dodont">' + selectOptionsHtml(['Do', "Don't"], 'Do') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Type</label><select class="form-input" id="fbl-type">' + selectOptionsHtml(FEEDBACK_TYPES, 'Insight') + '</select></div>'
+    + '</div>'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Category</label><input class="form-input" id="fbl-category" placeholder="e.g. Chiro avatar"></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Source</label><select class="form-input" id="fbl-source">' + selectOptionsHtml(FEEDBACK_SOURCES, 'Manual') + '</select></div>'
+    + '</div>'
+    + '<div class="form-group"><label class="form-label">Learning</label><textarea class="form-input" id="fbl-learning" rows="2"></textarea></div>'
+    + '<div class="form-group"><label class="form-label">Action/Takeaway</label><textarea class="form-input" id="fbl-action" rows="2"></textarea></div>'
+    + '<div class="form-group"><label class="form-label">URL</label><input class="form-input" id="fbl-url" placeholder="https://…"></div>'
+    + '<div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" id="fbl-cancel">Cancel</button><button class="btn btn-primary btn-sm" id="fbl-save">Save row</button></div>'
+    + '</div>';
+
+  document.getElementById('fbl-cancel').addEventListener('click', function () { FEEDBACK_UI.addLearningOpen = false; renderLearningForm(clientId); });
+  document.getElementById('fbl-save').addEventListener('click', function () { saveLearningRow(clientId); });
+}
+
+function saveLearningRow(clientId) {
+  const data = getFeedback(clientId);
+  const row = {
+    id: newRowId(),
+    date: (document.getElementById('fbl-date') || {}).value || '',
+    doDont: (document.getElementById('fbl-dodont') || {}).value || 'Do',
+    type: (document.getElementById('fbl-type') || {}).value || 'Insight',
+    category: (document.getElementById('fbl-category') || {}).value || '',
+    learning: (document.getElementById('fbl-learning') || {}).value || '',
+    action: (document.getElementById('fbl-action') || {}).value || '',
+    source: (document.getElementById('fbl-source') || {}).value || 'Manual',
+    url: (document.getElementById('fbl-url') || {}).value || ''
+  };
+  data.learnings.push(row);
+  saveFeedback(clientId, data);
+  FEEDBACK_UI.addLearningOpen = false;
+  renderLearningForm(clientId);
+  renderLearningRows(clientId, data.learnings);
+  notify('Row added.');
+}
+
+function renderLearningRows(clientId, rows) {
+  const tbody = document.getElementById('fb-learning-tbody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr style="cursor:default"><td colspan="9" style="text-align:center;color:var(--text-3);padding:24px">No learnings yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  rows.forEach(function (r) {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'default';
+    tr.dataset.id = r.id;
+    tr.innerHTML =
+      '<td><input type="date" class="inline-edit" data-field="date" value="' + esc(r.date) + '"></td>'
+      + '<td><select class="inline-edit" data-field="doDont">' + selectOptionsHtml(['Do', "Don't"], r.doDont) + '</select></td>'
+      + '<td><select class="inline-edit" data-field="type">' + selectOptionsHtml(FEEDBACK_TYPES, r.type) + '</select></td>'
+      + '<td><input class="inline-edit" data-field="category" value="' + esc(r.category) + '" style="width:110px"></td>'
+      + '<td style="min-width:200px"><textarea class="inline-edit" data-field="learning" rows="1">' + esc(r.learning) + '</textarea></td>'
+      + '<td style="min-width:200px"><textarea class="inline-edit" data-field="action" rows="1">' + esc(r.action) + '</textarea></td>'
+      + '<td><select class="inline-edit" data-field="source">' + selectOptionsHtml(FEEDBACK_SOURCES, r.source) + '</select></td>'
+      + '<td><input class="inline-edit" data-field="url" value="' + esc(r.url) + '" style="width:110px"></td>'
+      + '<td><button class="btn btn-danger btn-xs" data-action="delete">Delete</button></td>';
+    tbody.appendChild(tr);
+  });
+
+  tbody.onchange = function (e) {
+    const field = e.target.dataset.field;
+    if (!field) return;
+    const tr = e.target.closest('tr');
+    const id = tr && tr.dataset.id;
+    if (!id) return;
+    const data = getFeedback(clientId);
+    data.learnings = data.learnings.map(function (row) {
+      if (row.id !== id) return row;
+      const updated = Object.assign({}, row);
+      updated[field] = e.target.value;
+      return updated;
+    });
+    saveFeedback(clientId, data);
+  };
+  tbody.onclick = function (e) {
+    const btn = e.target.closest('[data-action="delete"]');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const id = tr && tr.dataset.id;
+    if (!id) return;
+    if (!confirm('Delete this row?')) return;
+    const data = getFeedback(clientId);
+    data.learnings = data.learnings.filter(function (row) { return row.id !== id; });
+    saveFeedback(clientId, data);
+    renderLearningRows(clientId, data.learnings);
+  };
+}
+
+function renderIdeaForm(clientId) {
+  const wrap = document.getElementById('fb-idea-form-wrap');
+  if (!wrap) return;
+  if (!FEEDBACK_UI.addIdeaOpen) { wrap.innerHTML = ''; return; }
+  const today = new Date().toISOString().slice(0, 10);
+  wrap.innerHTML = '<div class="card card-sm" style="margin-bottom:14px;background:var(--blue-bg);border-color:var(--blue-border)">'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Date</label><input type="date" class="form-input" id="fbi-date" value="' + today + '"></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Category</label><select class="form-input" id="fbi-category">' + selectOptionsHtml(IDEA_CATEGORIES, 'Other') + '</select></div>'
+    + '</div>'
+    + '<div class="form-group"><label class="form-label">Learning</label><textarea class="form-input" id="fbi-learning" rows="2"></textarea></div>'
+    + '<div class="form-group"><label class="form-label">Action/Takeaway</label><textarea class="form-input" id="fbi-action" rows="2"></textarea></div>'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Source</label><select class="form-input" id="fbi-source">' + selectOptionsHtml(FEEDBACK_SOURCES, 'Manual') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">URL</label><input class="form-input" id="fbi-url" placeholder="https://…"></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" id="fbi-cancel">Cancel</button><button class="btn btn-primary btn-sm" id="fbi-save">Save row</button></div>'
+    + '</div>';
+
+  document.getElementById('fbi-cancel').addEventListener('click', function () { FEEDBACK_UI.addIdeaOpen = false; renderIdeaForm(clientId); });
+  document.getElementById('fbi-save').addEventListener('click', function () { saveIdeaRow(clientId); });
+}
+
+function saveIdeaRow(clientId) {
+  const data = getFeedback(clientId);
+  const row = {
+    id: newRowId(),
+    date: (document.getElementById('fbi-date') || {}).value || '',
+    category: (document.getElementById('fbi-category') || {}).value || 'Other',
+    learning: (document.getElementById('fbi-learning') || {}).value || '',
+    action: (document.getElementById('fbi-action') || {}).value || '',
+    source: (document.getElementById('fbi-source') || {}).value || 'Manual',
+    url: (document.getElementById('fbi-url') || {}).value || ''
+  };
+  data.ideas.push(row);
+  saveFeedback(clientId, data);
+  FEEDBACK_UI.addIdeaOpen = false;
+  renderIdeaForm(clientId);
+  renderIdeaRows(clientId, data.ideas);
+  notify('Row added.');
+}
+
+function renderIdeaRows(clientId, rows) {
+  const tbody = document.getElementById('fb-idea-tbody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr style="cursor:default"><td colspan="7" style="text-align:center;color:var(--text-3);padding:24px">No ideas yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  rows.forEach(function (r) {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'default';
+    tr.dataset.id = r.id;
+    tr.innerHTML =
+      '<td><input type="date" class="inline-edit" data-field="date" value="' + esc(r.date) + '"></td>'
+      + '<td><select class="inline-edit" data-field="category">' + selectOptionsHtml(IDEA_CATEGORIES, r.category) + '</select></td>'
+      + '<td style="min-width:200px"><textarea class="inline-edit" data-field="learning" rows="1">' + esc(r.learning) + '</textarea></td>'
+      + '<td style="min-width:200px"><textarea class="inline-edit" data-field="action" rows="1">' + esc(r.action) + '</textarea></td>'
+      + '<td><select class="inline-edit" data-field="source">' + selectOptionsHtml(FEEDBACK_SOURCES, r.source) + '</select></td>'
+      + '<td><input class="inline-edit" data-field="url" value="' + esc(r.url) + '" style="width:110px"></td>'
+      + '<td><button class="btn btn-danger btn-xs" data-action="delete">Delete</button></td>';
+    tbody.appendChild(tr);
+  });
+
+  tbody.onchange = function (e) {
+    const field = e.target.dataset.field;
+    if (!field) return;
+    const tr = e.target.closest('tr');
+    const id = tr && tr.dataset.id;
+    if (!id) return;
+    const data = getFeedback(clientId);
+    data.ideas = data.ideas.map(function (row) {
+      if (row.id !== id) return row;
+      const updated = Object.assign({}, row);
+      updated[field] = e.target.value;
+      return updated;
+    });
+    saveFeedback(clientId, data);
+  };
+  tbody.onclick = function (e) {
+    const btn = e.target.closest('[data-action="delete"]');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const id = tr && tr.dataset.id;
+    if (!id) return;
+    if (!confirm('Delete this row?')) return;
+    const data = getFeedback(clientId);
+    data.ideas = data.ideas.filter(function (row) { return row.id !== id; });
+    saveFeedback(clientId, data);
+    renderIdeaRows(clientId, data.ideas);
+  };
+}
+
+// ─── Creative Mastersheet tab ─────────────────────────────────────────────────
+const MASTERSHEET_STATUSES = ['Uploaded', 'In progress', 'Waiting approval', 'N/A'];
+let MASTERSHEET_UI = { readOnly: false, openAccordion: null, addOpenFor: null };
+
+function mastersheetStatusBadge(status) {
+  const cls = status === 'Uploaded' ? 'badge-green'
+    : status === 'In progress' ? 'badge-amber'
+    : status === 'Waiting approval' ? 'badge-blue'
+    : 'badge-gray';
+  return '<span class="badge ' + cls + '">' + esc(status || 'N/A') + '</span>';
+}
+
+function renderMastersheet(el) {
+  const clientIds = Object.keys(APP.clients);
+  if (!clientIds.length) { el.innerHTML = '<div class="empty"><p>Add a client first.</p></div>'; return; }
+  if (MASTERSHEET_UI.openAccordion === null || !APP.clients[MASTERSHEET_UI.openAccordion]) {
+    MASTERSHEET_UI.openAccordion = clientIds[0];
+  }
+
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'
+    + '<p style="font-size:13px;color:var(--text-2)">Filled in manually — nothing here is auto-generated.</p>'
+    + '<label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-2)">'
+    + '<input type="checkbox" id="ms-readonly"' + (MASTERSHEET_UI.readOnly ? ' checked' : '') + '> Read-only view</label>'
+    + '</div>'
+    + '<div id="ms-accordions"></div>';
+  el.innerHTML = html;
+
+  document.getElementById('ms-readonly').addEventListener('change', function (e) {
+    MASTERSHEET_UI.readOnly = e.target.checked;
+    renderMastersheetAccordions();
+  });
+
+  renderMastersheetAccordions();
+}
+
+function mastersheetBody(clientId) {
+  const ro = MASTERSHEET_UI.readOnly;
+  let html = '';
+  if (!ro) {
+    html += '<div style="display:flex;justify-content:flex-end;margin-bottom:10px">'
+      + '<button class="btn btn-secondary btn-sm" data-action="add-row" data-client="' + esc(clientId) + '">+ Add row</button></div>'
+      + '<div id="ms-form-' + esc(clientId) + '"></div>';
+  }
+  html += '<div class="table-wrap"><table class="data-table"><thead><tr>'
+    + '<th>Date</th><th>Name</th><th>Creative</th><th>Copy of creative</th><th>Feedback/Notes</th><th>Status</th><th>AAAC</th>' + (ro ? '' : '<th></th>')
+    + '</tr></thead><tbody id="ms-tbody-' + esc(clientId) + '"></tbody></table></div>';
+  return html;
+}
+
+function renderMastersheetAccordions() {
+  const wrap = document.getElementById('ms-accordions');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  Object.values(APP.clients).forEach(function (c) {
+    const isOpen = MASTERSHEET_UI.openAccordion === c.id;
+    const section = document.createElement('div');
+    section.className = 'card card-sm';
+    section.style.marginBottom = '12px';
+    section.innerHTML =
+      '<div data-action="toggle-accordion" data-client="' + esc(c.id) + '" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<span style="width:8px;height:8px;border-radius:50%;background:' + esc(c.color) + ';display:inline-block"></span>'
+      + '<strong style="font-size:13px">' + esc(c.name) + '</strong>'
+      + '</div>'
+      + '<span style="font-size:11px;color:var(--text-3)">' + (isOpen ? '&#9650;' : '&#9660;') + '</span>'
+      + '</div>'
+      + '<div style="margin-top:' + (isOpen ? '16px' : '0') + '">' + (isOpen ? mastersheetBody(c.id) : '') + '</div>';
+    wrap.appendChild(section);
+  });
+
+  wrap.querySelectorAll('[data-action="toggle-accordion"]').forEach(function (node) {
+    node.addEventListener('click', function () {
+      const cid = node.dataset.client;
+      MASTERSHEET_UI.openAccordion = MASTERSHEET_UI.openAccordion === cid ? null : cid;
+      renderMastersheetAccordions();
+    });
+  });
+
+  wrap.querySelectorAll('[data-action="add-row"]').forEach(function (node) {
+    node.addEventListener('click', function () {
+      const cid = node.dataset.client;
+      MASTERSHEET_UI.addOpenFor = MASTERSHEET_UI.addOpenFor === cid ? null : cid;
+      renderMastersheetAddForm(cid);
+    });
+  });
+
+  Object.keys(APP.clients).forEach(function (cid) {
+    if (MASTERSHEET_UI.openAccordion !== cid) return;
+    renderMastersheetAddForm(cid);
+    renderMastersheetRows(cid);
+  });
+}
+
+function renderMastersheetAddForm(clientId) {
+  const wrap = document.getElementById('ms-form-' + clientId);
+  if (!wrap) return;
+  if (MASTERSHEET_UI.addOpenFor !== clientId) { wrap.innerHTML = ''; return; }
+  const today = new Date().toISOString().slice(0, 10);
+  wrap.innerHTML = '<div class="card card-sm" style="margin-bottom:12px;background:var(--blue-bg);border-color:var(--blue-border)">'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Date</label><input type="date" class="form-input" id="msn-date-' + clientId + '" value="' + today + '"></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Name</label><input class="form-input" id="msn-name-' + clientId + '" placeholder="Creative name"></div>'
+    + '</div>'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Creative (text/link)</label><input class="form-input" id="msn-creative-' + clientId + '" placeholder="Description or URL"></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Copy of creative (text/link)</label><input class="form-input" id="msn-copy-' + clientId + '" placeholder="Copy text or URL"></div>'
+    + '</div>'
+    + '<div class="form-group"><label class="form-label">Feedback/Notes</label><textarea class="form-input" id="msn-notes-' + clientId + '" rows="2"></textarea></div>'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Status</label><select class="form-input" id="msn-status-' + clientId + '">' + selectOptionsHtml(MASTERSHEET_STATUSES, 'Uploaded') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">AAAC</label><input class="form-input" id="msn-aaac-' + clientId + '"></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" id="msn-cancel-' + clientId + '">Cancel</button><button class="btn btn-primary btn-sm" id="msn-save-' + clientId + '">Save row</button></div>'
+    + '</div>';
+
+  document.getElementById('msn-cancel-' + clientId).addEventListener('click', function () {
+    MASTERSHEET_UI.addOpenFor = null;
+    renderMastersheetAddForm(clientId);
+  });
+  document.getElementById('msn-save-' + clientId).addEventListener('click', function () {
+    saveMastersheetRow(clientId);
+  });
+}
+
+function saveMastersheetRow(clientId) {
+  const data = getMastersheet(clientId);
+  const row = {
+    id: newRowId(),
+    date: (document.getElementById('msn-date-' + clientId) || {}).value || '',
+    name: (document.getElementById('msn-name-' + clientId) || {}).value || '',
+    creative: (document.getElementById('msn-creative-' + clientId) || {}).value || '',
+    copy: (document.getElementById('msn-copy-' + clientId) || {}).value || '',
+    notes: (document.getElementById('msn-notes-' + clientId) || {}).value || '',
+    status: (document.getElementById('msn-status-' + clientId) || {}).value || 'N/A',
+    aaac: (document.getElementById('msn-aaac-' + clientId) || {}).value || ''
+  };
+  data.rows.push(row);
+  saveMastersheet(clientId, data);
+  MASTERSHEET_UI.addOpenFor = null;
+  renderMastersheetAddForm(clientId);
+  renderMastersheetRows(clientId);
+  notify('Row added.');
+}
+
+function renderMastersheetRows(clientId) {
+  const tbody = document.getElementById('ms-tbody-' + clientId);
+  if (!tbody) return;
+  const data = getMastersheet(clientId);
+  const rows = data.rows;
+  const ro = MASTERSHEET_UI.readOnly;
+  const cols = ro ? 7 : 8;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr style="cursor:default"><td colspan="' + cols + '" style="text-align:center;color:var(--text-3);padding:24px">No creatives logged yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  rows.forEach(function (r) {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'default';
+    tr.dataset.id = r.id;
+    if (ro) {
+      tr.innerHTML =
+        '<td>' + esc(r.date) + '</td>'
+        + '<td class="name-col">' + esc(r.name) + '</td>'
+        + '<td>' + esc(r.creative) + '</td>'
+        + '<td>' + esc(r.copy) + '</td>'
+        + '<td>' + esc(r.notes) + '</td>'
+        + '<td>' + mastersheetStatusBadge(r.status) + '</td>'
+        + '<td>' + esc(r.aaac) + '</td>';
+    } else {
+      tr.innerHTML =
+        '<td><input type="date" class="inline-edit" data-field="date" value="' + esc(r.date) + '"></td>'
+        + '<td><input class="inline-edit" data-field="name" value="' + esc(r.name) + '" style="width:120px"></td>'
+        + '<td><input class="inline-edit" data-field="creative" value="' + esc(r.creative) + '" style="width:140px"></td>'
+        + '<td><input class="inline-edit" data-field="copy" value="' + esc(r.copy) + '" style="width:140px"></td>'
+        + '<td><textarea class="inline-edit" data-field="notes" rows="1" style="width:140px">' + esc(r.notes) + '</textarea></td>'
+        + '<td><select class="inline-edit" data-field="status">' + selectOptionsHtml(MASTERSHEET_STATUSES, r.status) + '</select></td>'
+        + '<td><input class="inline-edit" data-field="aaac" value="' + esc(r.aaac) + '" style="width:80px"></td>'
+        + '<td><button class="btn btn-danger btn-xs" data-action="delete">Delete</button></td>';
+    }
+    tbody.appendChild(tr);
+  });
+
+  if (ro) return;
+
+  tbody.onchange = function (e) {
+    const field = e.target.dataset.field;
+    if (!field) return;
+    const tr = e.target.closest('tr');
+    const id = tr && tr.dataset.id;
+    if (!id) return;
+    const d = getMastersheet(clientId);
+    d.rows = d.rows.map(function (row) {
+      if (row.id !== id) return row;
+      const updated = Object.assign({}, row);
+      updated[field] = e.target.value;
+      return updated;
+    });
+    saveMastersheet(clientId, d);
+  };
+  tbody.onclick = function (e) {
+    const btn = e.target.closest('[data-action="delete"]');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const id = tr && tr.dataset.id;
+    if (!id) return;
+    if (!confirm('Delete this row?')) return;
+    const d = getMastersheet(clientId);
+    d.rows = d.rows.filter(function (row) { return row.id !== id; });
+    saveMastersheet(clientId, d);
+    renderMastersheetRows(clientId);
+  };
+}
+
+// ─── Export / Import ──────────────────────────────────────────────────────────
+function collectFeedbackAndMastersheet() {
+  const feedback = {};
+  const mastersheet = {};
+  Object.keys(APP.clients).forEach(function (cid) {
+    feedback[cid] = getFeedback(cid);
+    mastersheet[cid] = getMastersheet(cid);
+  });
+  return { feedback: feedback, mastersheet: mastersheet };
+}
+
+function doExport() {
+  const extra = collectFeedbackAndMastersheet();
+  const payload = { clients: APP.clients, feedback: extra.feedback, mastersheet: extra.mastersheet };
+  const b = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href = u; a.download = 'creative_platform.json'; a.click();
+  notify('Exported.');
+}
+function doImport(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if (d.clients) { APP.clients = { ...DEFAULT_CLIENTS, ...d.clients }; saveState(); }
+      if (d.feedback) { Object.keys(d.feedback).forEach(function (cid) { saveFeedback(cid, d.feedback[cid]); }); }
+      if (d.mastersheet) { Object.keys(d.mastersheet).forEach(function (cid) { saveMastersheet(cid, d.mastersheet[cid]); }); }
+      renderSidebar(); renderMain(); notify('Imported.');
+    } catch(err) { alert('Invalid file.'); }
+  };
+  reader.readAsText(f);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadState();
+renderSidebar();
+renderMain();
+</script>
+</body>
+</html>
