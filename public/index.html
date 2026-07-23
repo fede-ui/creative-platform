@@ -426,6 +426,18 @@ const DEFAULT_CLIENTS = {
     knownWinners: 'TRIPLEX — FakePR_TeamBREAKING - Copia (CA): $4,480 spend, 30 results\nTRIPLEX — Static_New_FakePR (CA): $1,375, 11 results, cheapest CPM\nTRIPLEX — 3-Units-1-Mortgage (So-Cal): $3,354, 17 results\nTRIPLEX — Static_New_FakePR - Copy (So-Cal): CPM $43, 7 results',
     knownWarnings: 'TRIPLEX — OR/AZ/WA funnel anomaly: 17% click→LPV vs ~88% CA but 28% LPV→result. Possible tracking/pixel issue — investigate before optimizing\nTRIPLEX — CA/So-Cal: strong top (88% click→LPV) but only 2–3% LPV→result — post-landing is the bottleneck\nNEVER aggregate Triplex and Intro data in the same analysis — separate funnels, separate audiences, separate conclusions',
     analyses: []
+  },
+  irc: {
+    id: 'irc', name: 'IRC Partners', color: '#7c3aed', initials: 'IRC',
+    description: 'Equity-aligned capital partner for founders/operators raising $5M+ institutional capital (Capital Raise Pre-Flight diagnostic)',
+    offer: 'Entry offer: the Capital Raise Pre-Flight — a $2,997 one-time, 20–30 page diagnostic scoring a founder\'s deal across 12 institutional pass/fail gates, 10 business-day delivery, fee credits toward a broader IRC engagement. Funnel: Ad → VSL landing page → lead form (contact + 3 non-gating qualifying questions) → 30-min booking with Samuel → sales call → manual Stripe checkout link → intake. This is the wedge into IRC\'s core $40K/$150K equity-aligned capital-raise engagements, not a downsell.',
+    avatars: 'Institutional-Scale Real Estate Developers (capital-stack / structured capital), Privately Held Companies raising Series A+ ($5M+, proven traction). Excludes: accredited-investor/retail syndication ("little fish"), bargain shoppers, one-raise-then-goodbye seekers, CEOs who can\'t hold institutional conversations, cash-constrained prospects.',
+    funnelStages: 'Impressions, Clicks, LPV, Lead form submits, Booked calls',
+    resultMetric: 'Booked call (30-min Pre-Flight fit call with Samuel)',
+    namingNotes: '8 video scripts across 2 formats: Selfie mode (2 scripts, phone-in-hand walking) and Straight to camera (6 scripts, Samuel\'s home studio). Naming: SSW_IRC_Preflight_ScriptN_[aspect ratio]. Concepts tested: reframe-the-failure, silent-failure-loop, case study, before/after, real deal score, soft-no experience, objection flip. Tone must read as institutional capital markets, not marketing — formal, calm, direct, zero sales-hype language ("funnel", "guaranteed", "trust me", "unlock", "secret" are all off-brand).',
+    knownWinners: 'Week of Jul 1–22: $58 CPL (vs $62 historic), 15 booked calls at $121/call (vs $122 historic cost-per-booked-call) — trending better than baseline on lower volume.',
+    knownWarnings: 'SEC/legal — do NOT use anywhere in ads or copy: "307,000 institutional relationships/allocators", the "$37B" figure, the "$5M to $250M" range, the "$11M / $22.5M / 1.5x participating preferred" math, or "85% of institutional raises don\'t fail at the pitch, they fail at diligence." Standing rule from Samuel: no IRC-attributed network, track-record, or quantified stat claims on any public surface — when in doubt, it comes down.\nNever promise guaranteed funding or investor demand — only meetings/continued outreach are guaranteed.\nDo not position Samuel or IRC as attorneys/registered broker-dealers — securities are offered through Finalis Securities LLC, Member FINRA/SIPC; IRC Partners is not a registered broker-dealer.',
+    analyses: []
   }
 };
 
@@ -618,6 +630,7 @@ function renderSidebar() {
   if (toolsEl) {
     const fbActive = APP.view === 'feedback';
     const msActive = APP.view === 'mastersheet';
+    const sopActive = APP.view === 'sop';
     const firstClientId = Object.keys(APP.clients)[0] || '';
     toolsEl.innerHTML = `
       <button class="sidebar-item ${fbActive ? 'active' : ''}" onclick="nav('feedback',{clientId:'${APP.clientId || firstClientId}'})">
@@ -625,6 +638,9 @@ function renderSidebar() {
       </button>
       <button class="sidebar-item ${msActive ? 'active' : ''}" onclick="nav('mastersheet',{})">
         <span style="font-size:13px;line-height:1;color:var(--text-3)">&#128203;</span> Creative Mastersheet
+      </button>
+      <button class="sidebar-item ${sopActive ? 'active' : ''}" onclick="nav('sop',{clientId:'${APP.clientId || firstClientId}'})">
+        <span style="font-size:13px;line-height:1;color:var(--text-3)">&#128197;</span> Creative SOP
       </button>`;
   }
 }
@@ -672,6 +688,9 @@ function renderMain() {
   } else if (APP.view === 'mastersheet') {
     topTitle.textContent = 'Creative Mastersheet';
     renderMastersheet(content);
+  } else if (APP.view === 'sop') {
+    topTitle.textContent = 'Creative SOP';
+    renderSopBoard(content);
   }
 }
 
@@ -1659,7 +1678,36 @@ function saveContext(cid) {
 // so imports/exports of one never clobber the other.
 function feedbackKey(clientId) { return 'feedback_' + clientId; }
 function mastersheetKey(clientId) { return 'mastersheet_' + clientId; }
+function resourcesKey(clientId) { return 'resources_' + clientId; }
 function newRowId() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// One-time historical backfill pulled from the client's real Google Sheet /
+// Drive (via a live Drive connector) so the Mastersheet isn't empty on first
+// load. After the first read, this is saved to localStorage like any other
+// row and becomes fully user-editable — this seed never overwrites it again.
+const DEFAULT_MASTERSHEETS = {
+  irc: {
+    rows: [
+      { id: 'seed1', date: '2026-03-06', name: 'POSITIONING AND ASSETS', creative: '*NEW* Foundational Assets - 04/01/26', copy: 'Positioning / Assets', notes: '-', status: 'Uploaded', aaac: 'ACTIVE ADS' },
+      { id: 'seed2', date: '2026-05-15', name: 'CALLS 1 BOOKED SEQUENCE', creative: 'BRAND DEVELOPMENT AND KV', copy: 'IRC | CALLS BOOKED SEQUENCES | SSW', notes: '', status: 'Uploaded', aaac: '' },
+      { id: 'seed3', date: '2026-05-19', name: 'NEW ADS CYCLE 1', creative: 'Statics & Carousels - 5/13/26', copy: "IRC | NEW ADS CYCLE 1 | MAY '26", notes: '', status: 'Uploaded', aaac: '' },
+      { id: 'seed4', date: '2026-05-20', name: 'VSL', creative: 'VSL', copy: '', notes: '', status: 'Uploaded', aaac: 'Creative context' },
+      { id: 'seed5', date: '2026-05-22', name: 'NEW ADS CYCLE 2 (Video Ads)', creative: '**NEW** CYCLE 02 - 6/5/26', copy: "v2 | IRC | NEW ADS CYCLE 1 | MAY '26", notes: '', status: 'Uploaded', aaac: '' },
+      { id: 'seed6', date: '2026-06-16', name: 'NEW CYCLE 2 BATCH', creative: 'New batch - 6/16/26', copy: "v2 | IRC | NEW ADS CYCLE 1 | MAY '26", notes: 'The Doc here was updated untill 16/6', status: 'Uploaded', aaac: '' }
+    ]
+  }
+};
+// Real Drive links confirmed via Drive search for IRC's "SOCAL Briefs" panel.
+// doc/figma/weekly left blank — not confirmed, fill in manually.
+const DEFAULT_RESOURCES = {
+  irc: {
+    doc: '',
+    gamePlan: 'https://docs.google.com/presentation/d/1xehdGgUltHRbO5sByIFc_nFFs_1377ZlGPQuzk6G6eE/edit',
+    positioning: 'https://docs.google.com/document/d/10Gw4F1BOt016agNUFHij9HPWEVtkQRnvDwVF2fWdFxs/edit',
+    figma: '',
+    weekly: ''
+  }
+};
 
 function getFeedback(clientId) {
   try {
@@ -1675,11 +1723,49 @@ function getMastersheet(clientId) {
   try {
     const raw = localStorage.getItem(mastersheetKey(clientId));
     if (raw) { const d = JSON.parse(raw); return { rows: d.rows || [] }; }
+    if (DEFAULT_MASTERSHEETS[clientId]) {
+      saveMastersheet(clientId, DEFAULT_MASTERSHEETS[clientId]);
+      return { rows: DEFAULT_MASTERSHEETS[clientId].rows.slice() };
+    }
   } catch (e) {}
   return { rows: [] };
 }
 function saveMastersheet(clientId, data) {
   try { localStorage.setItem(mastersheetKey(clientId), JSON.stringify(data)); } catch (e) {}
+}
+function getResources(clientId) {
+  const blank = { doc: '', gamePlan: '', positioning: '', figma: '', weekly: '' };
+  try {
+    const raw = localStorage.getItem(resourcesKey(clientId));
+    if (raw) { return Object.assign({}, blank, JSON.parse(raw)); }
+    if (DEFAULT_RESOURCES[clientId]) {
+      const seeded = Object.assign({}, blank, DEFAULT_RESOURCES[clientId]);
+      saveResources(clientId, seeded);
+      return seeded;
+    }
+  } catch (e) {}
+  return blank;
+}
+function saveResources(clientId, data) {
+  try { localStorage.setItem(resourcesKey(clientId), JSON.stringify(data)); } catch (e) {}
+}
+function batchesKey(clientId) { return 'batches_' + clientId; }
+function getBatches(clientId) {
+  try {
+    const raw = localStorage.getItem(batchesKey(clientId));
+    if (raw) { const d = JSON.parse(raw); return { items: d.items || [] }; }
+  } catch (e) {}
+  return { items: [] };
+}
+function saveBatches(clientId, data) {
+  try { localStorage.setItem(batchesKey(clientId), JSON.stringify(data)); } catch (e) {}
+}
+
+// TODO: CLICKUP SYNC (batches) — once a ClickUp connector is wired in, mirror
+// each ClickUp task in the client's Creative SOP list/space into a batch card
+// here (stage <- ClickUp status, owner <- assignee), via saveBatches.
+function syncBatchesFromClickUp(clientId) {
+  notify('ClickUp sync is not connected yet.');
 }
 
 // TODO: SLACK SYNC — once a Slack connector is wired in, pull messages from the
@@ -1696,10 +1782,148 @@ function syncFeedbackFromClickUp(clientId) {
   notify('ClickUp sync is not connected yet.');
 }
 
+// TODO: DRIVE SYNC — once a Google Drive/Sheets connector is wired in with its
+// own OAuth app (separate from this one-time manual backfill), pull the live
+// Creative Mastersheet + SOCAL Briefs resource links for the client's Drive
+// folder and push rows into getMastersheet(clientId)/getResources(clientId)
+// via saveMastersheet/saveResources.
+function syncMastersheetFromDrive(clientId) {
+  notify('Drive sync is not connected yet.');
+}
+
+// ─── Dropdown option sets (user-editable) ──────────────────────────────────────
+// All dropdown choices across Feedback + Mastersheet live here so the person using
+// the tool can add/rename/remove options without touching code. Persisted under
+// ci_options_v1, separate from ci_v4 / feedback_* / mastersheet_* keys.
+const OPTIONS_KEY = 'ci_options_v1';
+const OPTION_DEFAULTS = {
+  feedbackTypes: ['Insight', 'Rule', 'Legal', 'Compliance', 'Avatar', 'Format', 'Copy', 'Other'],
+  feedbackSources: ['Client call', 'Slack', 'ClickUp', 'Manual', 'Meeting notes'],
+  feedbackCategories: ['Format', 'Copy', 'ICP', 'Compliance', 'Design', 'Disclaimer'],
+  ideaCategories: ['Copy', 'Creative format', 'Avatar angle', 'Hook idea', 'Other'],
+  mastersheetStatuses: ['Uploaded', 'In progress', 'Waiting approval', 'N/A'],
+  sopStages: ['Brief', 'Brainstorm', 'Review/Assignment', 'Production', 'Delivery']
+};
+const CATEGORY_COLOR_DEFAULTS = {
+  Format: '#8b5cf6', Copy: '#eab308', ICP: '#4c1d95',
+  Compliance: '#b45309', Design: '#ec4899', Disclaimer: '#0d9488',
+  Brief: '#6b7280', Brainstorm: '#2563eb', 'Review/Assignment': '#d97706',
+  Production: '#7c3aed', Delivery: '#16a34a'
+};
+const CATEGORY_COLOR_FALLBACK = '#6b7280';
+
+function loadOptionSets() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}') || {}; } catch (e) { saved = {}; }
+  const merged = {};
+  Object.keys(OPTION_DEFAULTS).forEach(function (k) {
+    merged[k] = (saved[k] && saved[k].length) ? saved[k] : OPTION_DEFAULTS[k].slice();
+  });
+  merged.categoryColors = Object.assign({}, CATEGORY_COLOR_DEFAULTS, saved.categoryColors || {});
+  return merged;
+}
+let OPTION_SETS = loadOptionSets();
+function saveOptionSets() {
+  try { localStorage.setItem(OPTIONS_KEY, JSON.stringify(OPTION_SETS)); } catch (e) {}
+}
+function getCategoryColor(name) {
+  return OPTION_SETS.categoryColors[name] || CATEGORY_COLOR_FALLBACK;
+}
+function categoryBadgeHtml(name) {
+  if (!name) return '';
+  const c = getCategoryColor(name);
+  return '<span class="badge" style="background:' + c + ';color:#fff;border:1px solid ' + c + '">' + esc(name) + '</span>';
+}
+function categorySelectStyle(name) {
+  const c = getCategoryColor(name);
+  return 'background:' + c + ';color:#fff;border-color:' + c + ';font-weight:600;';
+}
+
+// ─── Manage-options panel (shared by Feedback + Mastersheet tabs) ─────────────
+// Lets the user add/rename/remove entries in any of the option sets above,
+// and (for feedbackCategories) pick a color per option, instead of editing code.
+let OPTIONS_PANEL_OPEN = false;
+
+function renderOptionsToggle() {
+  return '<button class="btn btn-secondary btn-sm" id="options-manage-btn">&#9881; Manage options</button>';
+}
+
+function wireOptionsToggle(sections, afterChange) {
+  const btn = document.getElementById('options-manage-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    OPTIONS_PANEL_OPEN = !OPTIONS_PANEL_OPEN;
+    renderOptionsPanel(sections, afterChange);
+  });
+  renderOptionsPanel(sections, afterChange);
+}
+
+// sections: [{ key: 'feedbackTypes', label: 'Learning Type', colors: false }, ...]
+function renderOptionsPanel(sections, afterChange) {
+  const wrap = document.getElementById('options-panel-wrap');
+  if (!wrap) return;
+  if (!OPTIONS_PANEL_OPEN) { wrap.innerHTML = ''; return; }
+
+  let html = '<div class="card card-sm" style="margin-bottom:20px;background:var(--blue-bg);border-color:var(--blue-border)">';
+  html += '<p style="font-size:12px;color:var(--text-2);margin-bottom:14px">Add, rename, or remove the choices that show up in these dropdowns.</p>';
+  sections.forEach(function (s) {
+    const opts = OPTION_SETS[s.key];
+    html += '<div style="margin-bottom:16px">';
+    html += '<label class="form-label">' + esc(s.label) + '</label>';
+    html += '<div class="chip-row" data-key="' + esc(s.key) + '" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">';
+    opts.forEach(function (o) {
+      const style = s.colors ? ('background:' + getCategoryColor(o) + ';color:#fff;border-color:' + getCategoryColor(o)) : '';
+      html += '<span class="badge" style="' + style + ';display:inline-flex;gap:6px;align-items:center">'
+        + (s.colors ? '<input type="color" data-action="chip-color" data-key="' + esc(s.key) + '" data-value="' + esc(o) + '" value="' + esc(getCategoryColor(o)) + '" style="width:14px;height:14px;padding:0;border:none;cursor:pointer">' : '')
+        + esc(o)
+        + ' <button type="button" data-action="chip-remove" data-key="' + esc(s.key) + '" data-value="' + esc(o) + '" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:700;padding:0">&times;</button>'
+        + '</span>';
+    });
+    html += '</div>';
+    html += '<div style="display:flex;gap:8px">'
+      + '<input class="form-input" style="max-width:220px" placeholder="New option…" data-role="new-option" data-key="' + esc(s.key) + '">'
+      + '<button class="btn btn-ghost btn-sm" data-action="chip-add" data-key="' + esc(s.key) + '">+ Add</button>'
+      + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll('[data-action="chip-remove"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const key = btn.dataset.key, val = btn.dataset.value;
+      OPTION_SETS[key] = OPTION_SETS[key].filter(function (o) { return o !== val; });
+      saveOptionSets();
+      renderOptionsPanel(sections, afterChange);
+      if (afterChange) afterChange();
+    });
+  });
+  wrap.querySelectorAll('[data-action="chip-color"]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      OPTION_SETS.categoryColors[input.dataset.value] = input.value;
+      saveOptionSets();
+      renderOptionsPanel(sections, afterChange);
+      if (afterChange) afterChange();
+    });
+  });
+  wrap.querySelectorAll('[data-action="chip-add"]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const key = btn.dataset.key;
+      const input = wrap.querySelector('[data-role="new-option"][data-key="' + key + '"]');
+      const val = (input.value || '').trim();
+      if (!val || OPTION_SETS[key].indexOf(val) !== -1) return;
+      OPTION_SETS[key].push(val);
+      if (key === 'feedbackCategories' && !OPTION_SETS.categoryColors[val]) {
+        OPTION_SETS.categoryColors[val] = CATEGORY_COLOR_FALLBACK;
+      }
+      saveOptionSets();
+      renderOptionsPanel(sections, afterChange);
+      if (afterChange) afterChange();
+    });
+  });
+}
+
 // ─── Client Feedback tab ───────────────────────────────────────────────────────
-const FEEDBACK_TYPES = ['Insight', 'Rule', 'Legal', 'Compliance', 'Avatar', 'Format', 'Copy', 'Other'];
-const FEEDBACK_SOURCES = ['Client call', 'Slack', 'ClickUp', 'Manual', 'Meeting notes'];
-const IDEA_CATEGORIES = ['Copy', 'Creative format', 'Avatar angle', 'Hook idea', 'Other'];
 let FEEDBACK_UI = { addLearningOpen: false, addIdeaOpen: false };
 
 function selectOptionsHtml(options, selected) {
@@ -1709,19 +1933,24 @@ function selectOptionsHtml(options, selected) {
 }
 
 function renderFeedback(el) {
+  OPTIONS_PANEL_OPEN = false;
   const clientIds = Object.keys(APP.clients);
   if (!clientIds.length) { el.innerHTML = '<div class="empty"><p>Add a client first.</p></div>'; return; }
   const clientId = APP.clients[APP.clientId] ? APP.clientId : clientIds[0];
   const data = getFeedback(clientId);
 
   let html = '';
-  html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">'
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">'
+    + '<div style="display:flex;align-items:center;gap:12px">'
     + '<label class="form-label" style="margin:0">Client</label>'
     + '<select class="form-input" id="fb-client-select" style="width:220px">'
     + Object.values(APP.clients).map(function (cl) {
         return '<option value="' + esc(cl.id) + '"' + (cl.id === clientId ? ' selected' : '') + '>' + esc(cl.name) + '</option>';
       }).join('')
-    + '</select></div>';
+    + '</select></div>'
+    + renderOptionsToggle()
+    + '</div>'
+    + '<div id="options-panel-wrap"></div>';
 
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
     + '<h3 style="font-size:14px;font-weight:600">Learnings &amp; Rules</h3>'
@@ -1752,6 +1981,17 @@ function renderFeedback(el) {
     FEEDBACK_UI.addIdeaOpen = !FEEDBACK_UI.addIdeaOpen;
     renderIdeaForm(clientId);
   });
+  wireOptionsToggle([
+    { key: 'feedbackTypes', label: 'Learning Type' },
+    { key: 'feedbackCategories', label: 'Learning Category', colors: true },
+    { key: 'feedbackSources', label: 'Source (shared)' },
+    { key: 'ideaCategories', label: 'Creative Idea Category' }
+  ], function () {
+    renderLearningForm(clientId);
+    renderLearningRows(clientId, getFeedback(clientId).learnings);
+    renderIdeaForm(clientId);
+    renderIdeaRows(clientId, getFeedback(clientId).ideas);
+  });
 
   renderLearningForm(clientId);
   renderLearningRows(clientId, data.learnings);
@@ -1768,11 +2008,11 @@ function renderLearningForm(clientId) {
     + '<div class="three-col" style="margin-bottom:16px">'
     + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Date</label><input type="date" class="form-input" id="fbl-date" value="' + today + '"></div>'
     + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Do/Don&rsquo;t</label><select class="form-input" id="fbl-dodont">' + selectOptionsHtml(['Do', "Don't"], 'Do') + '</select></div>'
-    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Type</label><select class="form-input" id="fbl-type">' + selectOptionsHtml(FEEDBACK_TYPES, 'Insight') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Type</label><select class="form-input" id="fbl-type">' + selectOptionsHtml(OPTION_SETS.feedbackTypes, 'Insight') + '</select></div>'
     + '</div>'
     + '<div class="two-col" style="margin-bottom:16px">'
-    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Category</label><input class="form-input" id="fbl-category" placeholder="e.g. Chiro avatar"></div>'
-    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Source</label><select class="form-input" id="fbl-source">' + selectOptionsHtml(FEEDBACK_SOURCES, 'Manual') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Category</label><select class="form-input" id="fbl-category" style="' + categorySelectStyle(OPTION_SETS.feedbackCategories[0]) + '">' + selectOptionsHtml(OPTION_SETS.feedbackCategories, OPTION_SETS.feedbackCategories[0]) + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Source</label><select class="form-input" id="fbl-source">' + selectOptionsHtml(OPTION_SETS.feedbackSources, 'Manual') + '</select></div>'
     + '</div>'
     + '<div class="form-group"><label class="form-label">Learning</label><textarea class="form-input" id="fbl-learning" rows="2"></textarea></div>'
     + '<div class="form-group"><label class="form-label">Action/Takeaway</label><textarea class="form-input" id="fbl-action" rows="2"></textarea></div>'
@@ -1820,11 +2060,11 @@ function renderLearningRows(clientId, rows) {
     tr.innerHTML =
       '<td><input type="date" class="inline-edit" data-field="date" value="' + esc(r.date) + '"></td>'
       + '<td><select class="inline-edit" data-field="doDont">' + selectOptionsHtml(['Do', "Don't"], r.doDont) + '</select></td>'
-      + '<td><select class="inline-edit" data-field="type">' + selectOptionsHtml(FEEDBACK_TYPES, r.type) + '</select></td>'
-      + '<td><input class="inline-edit" data-field="category" value="' + esc(r.category) + '" style="width:110px"></td>'
+      + '<td><select class="inline-edit" data-field="type">' + selectOptionsHtml(OPTION_SETS.feedbackTypes, r.type) + '</select></td>'
+      + '<td><select class="inline-edit" data-field="category" style="' + categorySelectStyle(r.category) + '">' + selectOptionsHtml(OPTION_SETS.feedbackCategories, r.category) + '</select></td>'
       + '<td style="min-width:200px"><textarea class="inline-edit" data-field="learning" rows="1">' + esc(r.learning) + '</textarea></td>'
       + '<td style="min-width:200px"><textarea class="inline-edit" data-field="action" rows="1">' + esc(r.action) + '</textarea></td>'
-      + '<td><select class="inline-edit" data-field="source">' + selectOptionsHtml(FEEDBACK_SOURCES, r.source) + '</select></td>'
+      + '<td><select class="inline-edit" data-field="source">' + selectOptionsHtml(OPTION_SETS.feedbackSources, r.source) + '</select></td>'
       + '<td><input class="inline-edit" data-field="url" value="' + esc(r.url) + '" style="width:110px"></td>'
       + '<td><button class="btn btn-danger btn-xs" data-action="delete">Delete</button></td>';
     tbody.appendChild(tr);
@@ -1836,6 +2076,7 @@ function renderLearningRows(clientId, rows) {
     const tr = e.target.closest('tr');
     const id = tr && tr.dataset.id;
     if (!id) return;
+    if (field === 'category') { e.target.setAttribute('style', categorySelectStyle(e.target.value)); }
     const data = getFeedback(clientId);
     data.learnings = data.learnings.map(function (row) {
       if (row.id !== id) return row;
@@ -1867,12 +2108,12 @@ function renderIdeaForm(clientId) {
   wrap.innerHTML = '<div class="card card-sm" style="margin-bottom:14px;background:var(--blue-bg);border-color:var(--blue-border)">'
     + '<div class="two-col" style="margin-bottom:16px">'
     + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Date</label><input type="date" class="form-input" id="fbi-date" value="' + today + '"></div>'
-    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Category</label><select class="form-input" id="fbi-category">' + selectOptionsHtml(IDEA_CATEGORIES, 'Other') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Category</label><select class="form-input" id="fbi-category">' + selectOptionsHtml(OPTION_SETS.ideaCategories, 'Other') + '</select></div>'
     + '</div>'
     + '<div class="form-group"><label class="form-label">Learning</label><textarea class="form-input" id="fbi-learning" rows="2"></textarea></div>'
     + '<div class="form-group"><label class="form-label">Action/Takeaway</label><textarea class="form-input" id="fbi-action" rows="2"></textarea></div>'
     + '<div class="two-col" style="margin-bottom:16px">'
-    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Source</label><select class="form-input" id="fbi-source">' + selectOptionsHtml(FEEDBACK_SOURCES, 'Manual') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Source</label><select class="form-input" id="fbi-source">' + selectOptionsHtml(OPTION_SETS.feedbackSources, 'Manual') + '</select></div>'
     + '<div class="form-group" style="margin-bottom:0"><label class="form-label">URL</label><input class="form-input" id="fbi-url" placeholder="https://…"></div>'
     + '</div>'
     + '<div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" id="fbi-cancel">Cancel</button><button class="btn btn-primary btn-sm" id="fbi-save">Save row</button></div>'
@@ -1915,10 +2156,10 @@ function renderIdeaRows(clientId, rows) {
     tr.dataset.id = r.id;
     tr.innerHTML =
       '<td><input type="date" class="inline-edit" data-field="date" value="' + esc(r.date) + '"></td>'
-      + '<td><select class="inline-edit" data-field="category">' + selectOptionsHtml(IDEA_CATEGORIES, r.category) + '</select></td>'
+      + '<td><select class="inline-edit" data-field="category">' + selectOptionsHtml(OPTION_SETS.ideaCategories, r.category) + '</select></td>'
       + '<td style="min-width:200px"><textarea class="inline-edit" data-field="learning" rows="1">' + esc(r.learning) + '</textarea></td>'
       + '<td style="min-width:200px"><textarea class="inline-edit" data-field="action" rows="1">' + esc(r.action) + '</textarea></td>'
-      + '<td><select class="inline-edit" data-field="source">' + selectOptionsHtml(FEEDBACK_SOURCES, r.source) + '</select></td>'
+      + '<td><select class="inline-edit" data-field="source">' + selectOptionsHtml(OPTION_SETS.feedbackSources, r.source) + '</select></td>'
       + '<td><input class="inline-edit" data-field="url" value="' + esc(r.url) + '" style="width:110px"></td>'
       + '<td><button class="btn btn-danger btn-xs" data-action="delete">Delete</button></td>';
     tbody.appendChild(tr);
@@ -1954,8 +2195,31 @@ function renderIdeaRows(clientId, rows) {
 }
 
 // ─── Creative Mastersheet tab ─────────────────────────────────────────────────
-const MASTERSHEET_STATUSES = ['Uploaded', 'In progress', 'Waiting approval', 'N/A'];
 let MASTERSHEET_UI = { readOnly: false, openAccordion: null, addOpenFor: null };
+
+// Turns any http(s) URL inside a text value into a clickable link, leaving the
+// rest of the text as-is. Used for the "text + optional link" mastersheet fields.
+function linkifyHtml(text) {
+  const str = text || '';
+  const parts = str.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map(function (part) {
+    if (/^https?:\/\//.test(part)) {
+      const safeUrl = esc(part);
+      return '<a href="' + safeUrl + '" target="_blank" rel="noopener" style="color:var(--blue)">' + safeUrl + '</a>';
+    }
+    return esc(part);
+  }).join('');
+}
+function editableLinkCellHtml(field, value, width) {
+  const url = (String(value || '').match(/https?:\/\/[^\s]+/) || [''])[0];
+  let html = '<div style="display:flex;align-items:center;gap:4px">'
+    + '<input class="inline-edit" data-field="' + field + '" value="' + esc(value) + '" style="width:' + width + 'px">';
+  if (url) {
+    html += '<a href="' + esc(url) + '" target="_blank" rel="noopener" title="Open link" style="flex-shrink:0;text-decoration:none">&#128279;</a>';
+  }
+  html += '</div>';
+  return html;
+}
 
 function mastersheetStatusBadge(status) {
   const cls = status === 'Uploaded' ? 'badge-green'
@@ -1966,17 +2230,21 @@ function mastersheetStatusBadge(status) {
 }
 
 function renderMastersheet(el) {
+  OPTIONS_PANEL_OPEN = false;
   const clientIds = Object.keys(APP.clients);
   if (!clientIds.length) { el.innerHTML = '<div class="empty"><p>Add a client first.</p></div>'; return; }
   if (MASTERSHEET_UI.openAccordion === null || !APP.clients[MASTERSHEET_UI.openAccordion]) {
     MASTERSHEET_UI.openAccordion = clientIds[0];
   }
 
-  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
     + '<p style="font-size:13px;color:var(--text-2)">Filled in manually — nothing here is auto-generated.</p>'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + renderOptionsToggle()
     + '<label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-2)">'
     + '<input type="checkbox" id="ms-readonly"' + (MASTERSHEET_UI.readOnly ? ' checked' : '') + '> Read-only view</label>'
-    + '</div>'
+    + '</div></div>'
+    + '<div id="options-panel-wrap"></div>'
     + '<div id="ms-accordions"></div>';
   el.innerHTML = html;
 
@@ -1984,13 +2252,19 @@ function renderMastersheet(el) {
     MASTERSHEET_UI.readOnly = e.target.checked;
     renderMastersheetAccordions();
   });
+  wireOptionsToggle([
+    { key: 'mastersheetStatuses', label: 'Status' }
+  ], renderMastersheetAccordions);
 
   renderMastersheetAccordions();
 }
 
+const RESOURCE_TYPES = ['positioning', 'gamePlan', 'doc', 'figma', 'weekly'];
+const RESOURCE_LABELS = { positioning: 'Positioning & Initial Assets', gamePlan: 'Game Plan', doc: 'Doc', figma: 'Figma', weekly: 'Weekly presentations' };
+
 function mastersheetBody(clientId) {
   const ro = MASTERSHEET_UI.readOnly;
-  let html = '';
+  let html = '<div id="ms-resources-' + esc(clientId) + '" style="margin-bottom:14px"></div>';
   if (!ro) {
     html += '<div style="display:flex;justify-content:flex-end;margin-bottom:10px">'
       + '<button class="btn btn-secondary btn-sm" data-action="add-row" data-client="' + esc(clientId) + '">+ Add row</button></div>'
@@ -2000,6 +2274,39 @@ function mastersheetBody(clientId) {
     + '<th>Date</th><th>Name</th><th>Creative</th><th>Copy of creative</th><th>Feedback/Notes</th><th>Status</th><th>AAAC</th>' + (ro ? '' : '<th></th>')
     + '</tr></thead><tbody id="ms-tbody-' + esc(clientId) + '"></tbody></table></div>';
   return html;
+}
+
+function renderResourcesBlock(clientId) {
+  const wrap = document.getElementById('ms-resources-' + clientId);
+  if (!wrap) return;
+  const ro = MASTERSHEET_UI.readOnly;
+  const data = getResources(clientId);
+  let html = '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px">SOCAL Briefs</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:10px">';
+  RESOURCE_TYPES.forEach(function (t) {
+    const val = data[t] || '';
+    html += '<div style="display:flex;align-items:center;gap:6px">'
+      + '<span style="font-size:12px;color:var(--text-2)">' + esc(RESOURCE_LABELS[t]) + ':</span>';
+    if (ro) {
+      html += val ? ('<a href="' + esc(val) + '" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue)">Open link</a>') : '<span style="font-size:12px;color:var(--text-3)">—</span>';
+    } else {
+      html += '<input class="inline-edit" data-resource="' + t + '" value="' + esc(val) + '" placeholder="Paste link" style="width:170px;font-size:12px">'
+        + (val ? ('<a href="' + esc(val) + '" target="_blank" rel="noopener" title="Open link" style="text-decoration:none">&#128279;</a>') : '');
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  if (ro) return;
+  wrap.onchange = function (e) {
+    const t = e.target.dataset.resource;
+    if (!t) return;
+    const d = getResources(clientId);
+    d[t] = e.target.value;
+    saveResources(clientId, d);
+    renderResourcesBlock(clientId);
+  };
 }
 
 function renderMastersheetAccordions() {
@@ -2041,6 +2348,7 @@ function renderMastersheetAccordions() {
 
   Object.keys(APP.clients).forEach(function (cid) {
     if (MASTERSHEET_UI.openAccordion !== cid) return;
+    renderResourcesBlock(cid);
     renderMastersheetAddForm(cid);
     renderMastersheetRows(cid);
   });
@@ -2062,7 +2370,7 @@ function renderMastersheetAddForm(clientId) {
     + '</div>'
     + '<div class="form-group"><label class="form-label">Feedback/Notes</label><textarea class="form-input" id="msn-notes-' + clientId + '" rows="2"></textarea></div>'
     + '<div class="two-col" style="margin-bottom:16px">'
-    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Status</label><select class="form-input" id="msn-status-' + clientId + '">' + selectOptionsHtml(MASTERSHEET_STATUSES, 'Uploaded') + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Status</label><select class="form-input" id="msn-status-' + clientId + '">' + selectOptionsHtml(OPTION_SETS.mastersheetStatuses, 'Uploaded') + '</select></div>'
     + '<div class="form-group" style="margin-bottom:0"><label class="form-label">AAAC</label><input class="form-input" id="msn-aaac-' + clientId + '"></div>'
     + '</div>'
     + '<div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" id="msn-cancel-' + clientId + '">Cancel</button><button class="btn btn-primary btn-sm" id="msn-save-' + clientId + '">Save row</button></div>'
@@ -2117,8 +2425,8 @@ function renderMastersheetRows(clientId) {
       tr.innerHTML =
         '<td>' + esc(r.date) + '</td>'
         + '<td class="name-col">' + esc(r.name) + '</td>'
-        + '<td>' + esc(r.creative) + '</td>'
-        + '<td>' + esc(r.copy) + '</td>'
+        + '<td>' + linkifyHtml(r.creative) + '</td>'
+        + '<td>' + linkifyHtml(r.copy) + '</td>'
         + '<td>' + esc(r.notes) + '</td>'
         + '<td>' + mastersheetStatusBadge(r.status) + '</td>'
         + '<td>' + esc(r.aaac) + '</td>';
@@ -2126,10 +2434,10 @@ function renderMastersheetRows(clientId) {
       tr.innerHTML =
         '<td><input type="date" class="inline-edit" data-field="date" value="' + esc(r.date) + '"></td>'
         + '<td><input class="inline-edit" data-field="name" value="' + esc(r.name) + '" style="width:120px"></td>'
-        + '<td><input class="inline-edit" data-field="creative" value="' + esc(r.creative) + '" style="width:140px"></td>'
-        + '<td><input class="inline-edit" data-field="copy" value="' + esc(r.copy) + '" style="width:140px"></td>'
+        + '<td>' + editableLinkCellHtml('creative', r.creative, 120) + '</td>'
+        + '<td>' + editableLinkCellHtml('copy', r.copy, 120) + '</td>'
         + '<td><textarea class="inline-edit" data-field="notes" rows="1" style="width:140px">' + esc(r.notes) + '</textarea></td>'
-        + '<td><select class="inline-edit" data-field="status">' + selectOptionsHtml(MASTERSHEET_STATUSES, r.status) + '</select></td>'
+        + '<td><select class="inline-edit" data-field="status">' + selectOptionsHtml(OPTION_SETS.mastersheetStatuses, r.status) + '</select></td>'
         + '<td><input class="inline-edit" data-field="aaac" value="' + esc(r.aaac) + '" style="width:80px"></td>'
         + '<td><button class="btn btn-danger btn-xs" data-action="delete">Delete</button></td>';
     }
@@ -2167,20 +2475,159 @@ function renderMastersheetRows(clientId) {
   };
 }
 
+// ─── Creative SOP board ────────────────────────────────────────────────────────
+// Per-client Kanban tracking batches through the Creative Refresh SOP's stages
+// (Brief → Brainstorm → Review/Assignment → Production → Delivery). Stages are
+// just another editable option set (OPTION_SETS.sopStages), so "Manage options"
+// on this tab lets the stages themselves be renamed/recolored/extended as the
+// SOP gets adapted to other clients — nothing here is hardcoded to Asher.
+let SOP_UI = { addOpen: false };
+
+function renderSopBoard(el) {
+  OPTIONS_PANEL_OPEN = false;
+  const clientIds = Object.keys(APP.clients);
+  if (!clientIds.length) { el.innerHTML = '<div class="empty"><p>Add a client first.</p></div>'; return; }
+  const clientId = APP.clients[APP.clientId] ? APP.clientId : clientIds[0];
+
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">'
+    + '<div style="display:flex;align-items:center;gap:12px">'
+    + '<label class="form-label" style="margin:0">Client</label>'
+    + '<select class="form-input" id="sop-client-select" style="width:220px">'
+    + Object.values(APP.clients).map(function (cl) {
+        return '<option value="' + esc(cl.id) + '"' + (cl.id === clientId ? ' selected' : '') + '>' + esc(cl.name) + '</option>';
+      }).join('')
+    + '</select></div>'
+    + '<div style="display:flex;gap:10px">' + renderOptionsToggle() + '<button class="btn btn-primary btn-sm" id="sop-add-btn">+ Add batch</button></div>'
+    + '</div>'
+    + '<div id="options-panel-wrap"></div>'
+    + '<div id="sop-form-wrap"></div>'
+    + '<div id="sop-board" style="display:flex;gap:14px;overflow-x:auto;padding-bottom:8px"></div>';
+  el.innerHTML = html;
+
+  document.getElementById('sop-client-select').addEventListener('change', function (e) {
+    nav('sop', { clientId: e.target.value });
+  });
+  document.getElementById('sop-add-btn').addEventListener('click', function () {
+    SOP_UI.addOpen = !SOP_UI.addOpen;
+    renderSopAddForm(clientId);
+  });
+  wireOptionsToggle([{ key: 'sopStages', label: 'SOP Stages', colors: true }], function () {
+    renderSopAddForm(clientId);
+    renderSopColumns(clientId);
+  });
+
+  renderSopAddForm(clientId);
+  renderSopColumns(clientId);
+}
+
+function renderSopAddForm(clientId) {
+  const wrap = document.getElementById('sop-form-wrap');
+  if (!wrap) return;
+  if (!SOP_UI.addOpen) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = '<div class="card card-sm" style="margin-bottom:16px;background:var(--blue-bg);border-color:var(--blue-border)">'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Batch name</label><input class="form-input" id="sopn-name" placeholder="e.g. Cycle 3 — August batch"></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Owner</label><input class="form-input" id="sopn-owner" placeholder="e.g. Jose, Lina, Asher internal"></div>'
+    + '</div>'
+    + '<div class="two-col" style="margin-bottom:16px">'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Stage</label><select class="form-input" id="sopn-stage">' + selectOptionsHtml(OPTION_SETS.sopStages, OPTION_SETS.sopStages[0]) + '</select></div>'
+    + '<div class="form-group" style="margin-bottom:0"><label class="form-label">Due date</label><input type="date" class="form-input" id="sopn-due"></div>'
+    + '</div>'
+    + '<div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="sopn-notes" rows="2"></textarea></div>'
+    + '<div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" id="sopn-cancel">Cancel</button><button class="btn btn-primary btn-sm" id="sopn-save">Save batch</button></div>'
+    + '</div>';
+  document.getElementById('sopn-cancel').addEventListener('click', function () { SOP_UI.addOpen = false; renderSopAddForm(clientId); });
+  document.getElementById('sopn-save').addEventListener('click', function () { saveSopBatch(clientId); });
+}
+
+function saveSopBatch(clientId) {
+  const data = getBatches(clientId);
+  const batch = {
+    id: newRowId(),
+    name: (document.getElementById('sopn-name') || {}).value || 'Untitled batch',
+    owner: (document.getElementById('sopn-owner') || {}).value || '',
+    stage: (document.getElementById('sopn-stage') || {}).value || OPTION_SETS.sopStages[0],
+    due: (document.getElementById('sopn-due') || {}).value || '',
+    notes: (document.getElementById('sopn-notes') || {}).value || ''
+  };
+  data.items.push(batch);
+  saveBatches(clientId, data);
+  SOP_UI.addOpen = false;
+  renderSopAddForm(clientId);
+  renderSopColumns(clientId);
+  notify('Batch added.');
+}
+
+function renderSopColumns(clientId) {
+  const wrap = document.getElementById('sop-board');
+  if (!wrap) return;
+  const data = getBatches(clientId);
+  const stages = OPTION_SETS.sopStages;
+  wrap.innerHTML = '';
+  stages.forEach(function (stage, idx) {
+    const col = document.createElement('div');
+    col.style.cssText = 'flex:0 0 240px;min-width:240px';
+    const items = data.items.filter(function (b) { return b.stage === stage; });
+    let colHtml = '<div style="margin-bottom:10px">' + categoryBadgeHtml(stage) + ' <span style="font-size:11px;color:var(--text-3)">(' + items.length + ')</span></div>';
+    if (!items.length) {
+      colHtml += '<div style="font-size:12px;color:var(--text-3);padding:12px;border:1px dashed var(--border);border-radius:var(--radius);text-align:center">No batches</div>';
+    }
+    items.forEach(function (b) {
+      colHtml += '<div class="card card-sm" data-batch="' + esc(b.id) + '" style="margin-bottom:10px;padding:12px">'
+        + '<div style="font-size:13px;font-weight:600;margin-bottom:4px">' + esc(b.name) + '</div>'
+        + (b.owner ? ('<div style="font-size:11px;color:var(--text-2);margin-bottom:4px">' + esc(b.owner) + '</div>') : '')
+        + (b.due ? ('<div style="font-size:11px;color:var(--text-3);margin-bottom:6px">Due ' + esc(b.due) + '</div>') : '')
+        + (b.notes ? ('<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">' + esc(b.notes) + '</div>') : '')
+        + '<div style="display:flex;gap:6px;align-items:center">'
+        + (idx > 0 ? '<button class="btn btn-ghost btn-xs" data-action="sop-back" data-batch="' + esc(b.id) + '">&larr;</button>' : '')
+        + (idx < stages.length - 1 ? '<button class="btn btn-ghost btn-xs" data-action="sop-forward" data-batch="' + esc(b.id) + '">&rarr;</button>' : '')
+        + '<button class="btn btn-danger btn-xs" data-action="sop-delete" data-batch="' + esc(b.id) + '" style="margin-left:auto">Delete</button>'
+        + '</div></div>';
+    });
+    col.innerHTML = colHtml;
+    wrap.appendChild(col);
+  });
+
+  wrap.onclick = function (e) {
+    const back = e.target.closest('[data-action="sop-back"]');
+    const fwd = e.target.closest('[data-action="sop-forward"]');
+    const del = e.target.closest('[data-action="sop-delete"]');
+    if (!back && !fwd && !del) return;
+    const id = (back || fwd || del).dataset.batch;
+    const d = getBatches(clientId);
+    const b = d.items.find(function (x) { return x.id === id; });
+    if (!b) return;
+    if (del) {
+      if (!confirm('Delete this batch?')) return;
+      d.items = d.items.filter(function (x) { return x.id !== id; });
+    } else {
+      const curIdx = stages.indexOf(b.stage);
+      const nextIdx = back ? curIdx - 1 : curIdx + 1;
+      if (nextIdx >= 0 && nextIdx < stages.length) b.stage = stages[nextIdx];
+    }
+    saveBatches(clientId, d);
+    renderSopColumns(clientId);
+  };
+}
+
 // ─── Export / Import ──────────────────────────────────────────────────────────
 function collectFeedbackAndMastersheet() {
   const feedback = {};
   const mastersheet = {};
+  const resources = {};
+  const batches = {};
   Object.keys(APP.clients).forEach(function (cid) {
     feedback[cid] = getFeedback(cid);
     mastersheet[cid] = getMastersheet(cid);
+    resources[cid] = getResources(cid);
+    batches[cid] = getBatches(cid);
   });
-  return { feedback: feedback, mastersheet: mastersheet };
+  return { feedback: feedback, mastersheet: mastersheet, resources: resources, batches: batches };
 }
 
 function doExport() {
   const extra = collectFeedbackAndMastersheet();
-  const payload = { clients: APP.clients, feedback: extra.feedback, mastersheet: extra.mastersheet };
+  const payload = { clients: APP.clients, feedback: extra.feedback, mastersheet: extra.mastersheet, resources: extra.resources, batches: extra.batches, options: OPTION_SETS };
   const b = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const u = URL.createObjectURL(b);
   const a = document.createElement('a'); a.href = u; a.download = 'creative_platform.json'; a.click();
@@ -2195,6 +2642,9 @@ function doImport(e) {
       if (d.clients) { APP.clients = { ...DEFAULT_CLIENTS, ...d.clients }; saveState(); }
       if (d.feedback) { Object.keys(d.feedback).forEach(function (cid) { saveFeedback(cid, d.feedback[cid]); }); }
       if (d.mastersheet) { Object.keys(d.mastersheet).forEach(function (cid) { saveMastersheet(cid, d.mastersheet[cid]); }); }
+      if (d.resources) { Object.keys(d.resources).forEach(function (cid) { saveResources(cid, d.resources[cid]); }); }
+      if (d.batches) { Object.keys(d.batches).forEach(function (cid) { saveBatches(cid, d.batches[cid]); }); }
+      if (d.options) { OPTION_SETS = Object.assign({}, OPTION_SETS, d.options); saveOptionSets(); }
       renderSidebar(); renderMain(); notify('Imported.');
     } catch(err) { alert('Invalid file.'); }
   };
